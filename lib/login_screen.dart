@@ -37,7 +37,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 SizedBox(height: 20),
                 customTextField(
-                  "Plate Number",
+                  "Body Number",
                   Icons.directions_car,
                   false,
                   plateNumberController,
