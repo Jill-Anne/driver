@@ -1,3 +1,4 @@
+import 'package:driver/pages/dashboard.dart';
 import 'package:driver/reusable_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -47,7 +48,7 @@ class _LoginScreenState extends State<LoginScreen> {
         // If the combination exists, navigate to another page
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => AnotherPage()),
+          MaterialPageRoute(builder: (context) => Dashboard()),
         );
       } else {
         // If the combination doesn't exist, show an alert or handle accordingly
@@ -134,16 +135,18 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 }
 
-class AnotherPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Welcome'),
-      ),
-      body: Center(
-        child: Text('You have successfully logged in!'),
-      ),
-    );
-  }
-}
+
+
+// class AnotherPage extends StatelessWidget {
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       appBar: AppBar(
+//         title: Text('Welcome'),
+//       ),
+//       body: Center(
+//         child: Text('You have successfully logged in!'),
+//       ),
+//     );
+//   }
+// }
