@@ -52,6 +52,7 @@ void initState() {
 
   // Initialize push notification system
   initializePushNotificationSystem();
+  
 }
 
 
@@ -307,6 +308,7 @@ initializePushNotificationSystem()
 {
   PushNotificationSystem notificationSystem = PushNotificationSystem();
   notificationSystem.generateDeviceRegistrationToken();
+  notificationSystem.startListeningForNewNotification();
 }
 
 
