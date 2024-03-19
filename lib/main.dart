@@ -20,13 +20,25 @@ void main() async {
         appId: "1:755339267599:web:b6fae1da7711fc97e01d7a",
         measurementId: "G-4H2JKHJB7F"),
   );
+    
+  await Permission.notification.isDenied.then((valueOfPermission)
+  {
+    if(valueOfPermission)
+    {
+      Permission.notification.request();
+    }
+  });
+
 
   await Permission.locationWhenInUse.isDenied.then((valueOfPermission) {
     if (valueOfPermission) {
       Permission.locationWhenInUse.request();
     }
   });
+
+
   runApp(const MyApp());
+  
 }
 
 class MyApp extends StatelessWidget {
@@ -35,7 +47,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'DriversApp',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,

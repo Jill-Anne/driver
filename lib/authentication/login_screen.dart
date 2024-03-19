@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:driver/reusable_widgets.dart';
 
+import '../pages/dashboard.dart';
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -39,7 +41,7 @@ Future<void> _login(BuildContext context) async {
       print('Login successful.');
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const HomePage()),
+        MaterialPageRoute(builder: (context) => const Dashboard()),
       );
     } else {
       print('Login failed: User is null.');

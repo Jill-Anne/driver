@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:driver/authentication/login_screen.dart';
 import 'package:driver/pages/dashboard.dart';
+import 'package:driver/pushNotification/push_notification_system.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
@@ -33,20 +34,29 @@ class _HomePageState extends State<HomePage> {
 
   StreamSubscription<Position>? positionStreamHomePage;
 
-  @override
-  void initState() {
-    super.initState();
-    FirebaseAuth.instance.authStateChanges().listen((User? user) {
-      if (user != null) {
-        print('User is authenticated: ${user.uid}');
-      } else {
-        print('User is not authenticated.');
-      }
-    });
+@override
+void initState() {
+  super.initState();
 
-        // Initialize Geofire here with the correct path according to your Firebase Database structure
-    Geofire.initialize('driversLocation');
-  }
+  // Listen to authentication state changes
+  FirebaseAuth.instance.authStateChanges().listen((User? user) {
+    if (user != null) {
+      print('User is authenticated: ${user.uid}');
+    } else {
+      print('User is not authenticated.');
+    }
+  });
+
+  // Initialize Geofire
+  Geofire.initialize('driversLocation');
+
+  // Initialize push notification system
+  initializePushNotificationSystem();
+}
+
+
+
+
 
   @override
   void dispose() {
@@ -292,5 +302,12 @@ void goOfflineNow() {
     newTripRequestReference.remove();
   }
 }
+
+initializePushNotificationSystem()
+{
+  PushNotificationSystem notificationSystem = PushNotificationSystem();
+  notificationSystem.generateDeviceRegistrationToken();
+}
+
 
 }
