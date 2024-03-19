@@ -42,7 +42,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId "com.example.driver"
+        applicationId "com.signup.driver"
         // If a lower version of the Android SDK is used, consider using an older version of the google map flutter plugin.
         minSdkVersion 20
         targetSdkVersion flutter.targetSdkVersion.toInteger()
@@ -63,4 +63,10 @@ flutter {
     source '../..'
 }
 
-dependencies {}
+dependencies {
+    implementation(platform("com.google.firebase:firebase-bom:32.7.4"))
+    implementation("com.google.firebase:firebase-analytics")
+}
+
+//apply plugin: 'com.google.gms.google-services'
+apply plugin: 'eclipse'

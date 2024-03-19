@@ -1,21 +1,29 @@
+
+
 import 'package:driver/pages/home_page.dart';
 import 'package:driver/pages/profile_page.dart';
 import 'package:driver/pages/trips_page.dart';
 import 'package:flutter/material.dart';
 
-class Dashboard extends StatefulWidget {
+
+class Dashboard extends StatefulWidget
+{
   const Dashboard({super.key});
 
   @override
   State<Dashboard> createState() => _DashboardState();
 }
 
-class _DashboardState extends State<Dashboard>
-    with SingleTickerProviderStateMixin {
+
+
+class _DashboardState extends State<Dashboard> with SingleTickerProviderStateMixin
+{
   TabController? controller;
   int indexSelected = 0;
 
-  onBarItemClicked(int i) {
+
+  onBarItemClicked(int i)
+  {
     setState(() {
       indexSelected = i;
       controller!.index = indexSelected;
@@ -27,7 +35,7 @@ class _DashboardState extends State<Dashboard>
     // TODO: implement initState
     super.initState();
 
-    controller = TabController(length: 4, vsync: this);
+    controller = TabController(length: 3, vsync: this);
   }
 
   @override
@@ -38,28 +46,33 @@ class _DashboardState extends State<Dashboard>
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context)
+  {
     return Scaffold(
       body: TabBarView(
         physics: const NeverScrollableScrollPhysics(),
         controller: controller,
         children: const [
           HomePage(),
-          //      EarningsPage(),
           TripsPage(),
           ProfilePage(),
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-          // BottomNavigationBarItem(
-          //     icon: Icon(Icons.credit_card),
-          //     label: "Earnings"
-          // ),
+        items: const
+        [
           BottomNavigationBarItem(
-              icon: Icon(Icons.account_tree), label: "Trips"),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
+            icon: Icon(Icons.home),
+            label: "Home"
+          ),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.account_tree),
+              label: "Trips"
+          ),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.person),
+              label: "Profile"
+          ),
         ],
         currentIndex: indexSelected,
         //backgroundColor: Colors.grey,

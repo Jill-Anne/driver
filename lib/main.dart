@@ -1,3 +1,4 @@
+import 'package:driver/pages/dashboard.dart';
 import 'package:driver/pages/home_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -8,15 +9,16 @@ import 'package:permission_handler/permission_handler.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
-    options: FirebaseOptions(
-      authDomain: "add-users-admin.firebaseapp.com",
-      projectId: "add-users-admin",
-      storageBucket: "add-users-admin.appspot.com",
-      messagingSenderId: "660357140183",
-      appId: "1:660357140183:web:940b0b0ff28e6fc0dbea92",
-      measurementId: "G-NTJ6FKBQMM",
-      apiKey: "AIzaSyC09UWjC-mDHPf7DOpLseRBdFA6qVhQML0",
-    ),
+    options: const FirebaseOptions(
+        apiKey: "AIzaSyDtvRVetb6lZzxpIQQ8gqIGK1J2WOlBnok",
+        authDomain: "passenger-signuplogin.firebaseapp.com",
+        databaseURL:
+            "https://passenger-signuplogin-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "passenger-signuplogin",
+        storageBucket: "passenger-signuplogin.appspot.com",
+        messagingSenderId: "755339267599",
+        appId: "1:755339267599:web:b6fae1da7711fc97e01d7a",
+        measurementId: "G-4H2JKHJB7F"),
   );
 
   await Permission.locationWhenInUse.isDenied.then((valueOfPermission) {
@@ -39,28 +41,23 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
       home: FutureBuilder(
-        future: checkAuthenticationState(),
-        builder: (context, snapshot) {
+        // Check if the user is authenticated
+        future: FirebaseAuth.instance.authStateChanges().first,
+        builder: (BuildContext context, AsyncSnapshot<User?> snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            // Loading indicator or splash screen while checking authentication status
+            // Show a loading indicator while checking authentication state
             return CircularProgressIndicator();
           } else {
-            bool isAuthenticated = snapshot.data as bool;
-            return isAuthenticated ? const HomePage() : const LoginScreen();
+            if (snapshot.hasData && snapshot.data != null) {
+              // If user is authenticated, show the Dashboard
+              return Dashboard();
+            } else {
+              // If user is not authenticated, show the LoginScreen
+              return LoginScreen();
+            }
           }
         },
       ),
     );
   }
-
-  Future<bool> checkAuthenticationState() async {
-    // Add your authentication check logic here
-    // For example, you can use FirebaseAuth.instance.currentUser
-    // to check if the user is authenticated or not
-    // Replace this with your actual authentication logic
-    await Future.delayed(const Duration(seconds: 2)); // Simulating a delay for demonstration
-    bool isAuthenticated = FirebaseAuth.instance.currentUser != null;
-    return isAuthenticated;
-  }
 }
-
