@@ -17,45 +17,43 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _birthdateController = TextEditingController();
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-Future<void> _login(BuildContext context) async {
-  final String email = _emailController.text.trim();
-  final String birthdate = _birthdateController.text.trim();
+  Future<void> _login(BuildContext context) async {
+    final String email = _emailController.text.trim();
+    final String birthdate = _birthdateController.text.trim();
 
-  // Validate email and birthdate
-  if (email.isEmpty || birthdate.isEmpty) {
-    _showErrorDialog(
-      context,
-      "Please enter both email and birthdate.",
-    );
-    return;
-  }
-
-  try {
-    UserCredential userCredential =
-        await _auth.signInWithEmailAndPassword(
-      email: email,
-      password: birthdate,
-    );
-
-    if (userCredential.user != null) {
-      print('Login successful.');
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const Dashboard()),
-      );
-    } else {
-      print('Login failed: User is null.');
+    // Validate email and birthdate
+    if (email.isEmpty || birthdate.isEmpty) {
       _showErrorDialog(
         context,
-        "User authentication failed. Please check your credentials.",
+        "Please enter both email and birthdate.",
       );
+      return;
     }
-  } catch (error) {
-    print('Login failed: $error');
-    _showErrorDialog(context, "An error occurred: $error");
-  }
-}
 
+    try {
+      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: birthdate,
+      );
+
+      if (userCredential.user != null) {
+        print('Login successful.');
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const Dashboard()),
+        );
+      } else {
+        print('Login failed: User is null.');
+        _showErrorDialog(
+          context,
+          "User authentication failed. Please check your credentials.",
+        );
+      }
+    } catch (error) {
+      print('Login failed: $error');
+      _showErrorDialog(context, "An error occurred: $error");
+    }
+  }
 
   void _showErrorDialog(BuildContext context, String message) {
     showDialog(
@@ -78,6 +76,7 @@ Future<void> _login(BuildContext context) async {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      
       body: Stack(
         children: [
           CustomColumnWithLogo(),

@@ -308,7 +308,7 @@ initializePushNotificationSystem()
 {
   PushNotificationSystem notificationSystem = PushNotificationSystem();
   notificationSystem.generateDeviceRegistrationToken();
-  notificationSystem.startListeningForNewNotification();
+  notificationSystem.startListeningForNewNotification(context);
 }
 
 

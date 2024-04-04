@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:assets_audio_player/assets_audio_player.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
@@ -13,3 +14,8 @@ const CameraPosition googlePlexInitialPosition = CameraPosition(
 );
 
 StreamSubscription<Position>? positionStreamHomePage;
+StreamSubscription<Position>? positionStreamNewTripPage;
+
+int driverTripRequestTimeout = 22;
+final audioPlayer = AssetsAudioPlayer();
+Position? driverCurrentPosition;
