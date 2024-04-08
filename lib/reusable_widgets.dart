@@ -2,12 +2,6 @@
 // reusable_widgets.dart
 import 'package:flutter/material.dart';
 
-Image logowidget(String imageName) {
-  return Image.asset(
-    imageName,
-    fit: BoxFit.fitWidth,
-  );
-}
 
 TextField customTextField(String labelText, IconData prefixIcon, bool isPasswordType, TextEditingController controller, {bool obscureText = false, TextInputType? inputType}) {
   bool _isPasswordVisible = obscureText; // Track password visibility
@@ -37,35 +31,6 @@ TextField customTextField(String labelText, IconData prefixIcon, bool isPassword
 }
 
 
-Container signInSignUpButton(BuildContext context, bool isLogin, Function onTap) {
-  return Container(
-    width: MediaQuery.of(context).size.width,
-    height: 50,
-    margin: const EdgeInsets.fromLTRB(0, 10, 0, 20),
-    decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(90),
-    ),
-    child: ElevatedButton(
-      onPressed: () {
-        onTap();
-      },
-      style: ElevatedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 80, vertical: 10), backgroundColor: const Color(0xFF2E3192),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(30),
-        ),
-      ),
-      child: Text(
-        isLogin ? 'LOG IN' : 'SIGN UP',
-        style: const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.bold,
-          fontSize: 16,
-        ),
-      ),
-    ),
-  );
-}
 
 class CustomColumnWithLogo extends StatelessWidget {
   @override
@@ -87,4 +52,42 @@ class CustomColumnWithLogo extends StatelessWidget {
       ],
     );
   }
+}
+
+Image logowidget(String imageName) {
+  return Image.asset(
+    imageName,
+    fit: BoxFit.fitWidth,
+  );
+}
+
+Container signInSignUpButton(BuildContext context, bool isLogin, Function onTap) {
+  return Container(
+    width: MediaQuery.of(context).size.width,
+    height: 50,
+    margin: const EdgeInsets.fromLTRB(0, 10, 0, 20),
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(90),
+    ),
+    child: ElevatedButton(
+      onPressed: () {
+        onTap();
+      },
+      style: ElevatedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 80, vertical: 10),
+        backgroundColor: const Color(0xFF2E3192),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(30),
+        ),
+      ),
+      child: Text(
+        isLogin ? 'LOG IN' : 'SIGN UP',
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+          fontSize: 16,
+        ),
+      ),
+    ),
+  );
 }

@@ -1,17 +1,17 @@
+
+
 import 'dart:async';
 
+import 'package:driver/global/global_var.dart';
 import 'package:driver/methods/common_methods.dart';
+import 'package:driver/methods/map_theme_methods.dart';
 import 'package:driver/models/trip_details.dart';
+import 'package:driver/widgets/loading_dialog.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
-
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-
-import '../global/global_var.dart';
-import '../widgets/loading_dialog.dart';
-
 
 class NewTripPage extends StatefulWidget
 {
@@ -27,7 +27,7 @@ class _NewTripPageState extends State<NewTripPage>
 {
   final Completer<GoogleMapController> googleMapCompleterController = Completer<GoogleMapController>();
   GoogleMapController? controllerGoogleMap;
-  
+  MapThemeMethods themeMethods = MapThemeMethods();
   double googleMapPaddingFromBottom = 0;
   List<LatLng> coordinatesPolylineLatLngList = [];
   PolylinePoints polylinePoints = PolylinePoints();
@@ -237,7 +237,7 @@ class _NewTripPageState extends State<NewTripPage>
             onMapCreated: (GoogleMapController mapController) async
             {
               controllerGoogleMap = mapController;
-              
+              themeMethods.updateMapTheme(controllerGoogleMap!);
               googleMapCompleterController.complete(controllerGoogleMap);
 
               setState(() {

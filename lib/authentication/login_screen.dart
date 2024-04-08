@@ -76,7 +76,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      
+      resizeToAvoidBottomInset: false, // Prevents resizing when keyboard is shown
       body: Stack(
         children: [
           CustomColumnWithLogo(),
@@ -133,3 +133,4 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
+

@@ -1,33 +1,46 @@
 import 'dart:convert';
 
-
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:driver/global/global_var.dart';
-import 'package:driver/models/direction_details.dart';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_geofire/flutter_geofire.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 
+import '../models/direction_details.dart';
 
-class CommonMethods
-{
+class CommonMethods {
+  checkConnectivity(BuildContext context) async {
+    var connectionResult = await Connectivity().checkConnectivity();
 
-  displaySnackBar(String messageText, BuildContext context)
-  {
+    if (connectionResult != ConnectivityResult.mobile &&
+        connectionResult != ConnectivityResult.wifi) {
+      if (!context.mounted) return;
+      displaySnackBar(
+          "your Internet is not Available. Check your connection. Try Again.",
+          context);
+    }
+  }
+
+  displaySnackBar(String messageText, BuildContext context) {
     var snackBar = SnackBar(content: Text(messageText));
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
-  turnOffLocationUpdatesForHomePage()
-  {
-    positionStreamHomePage!.pause();
+  turnOffLocationUpdatesForHomePage() {
+    if (positionStreamHomePage != null) {
+      positionStreamHomePage!
+          .cancel(); // Cancel the stream subscription if it's not null
+      positionStreamHomePage =
+          null; // Set it to null to indicate that it's no longer in use
+    }
 
     Geofire.removeLocation(FirebaseAuth.instance.currentUser!.uid);
   }
 
-  turnOnLocationUpdatesForHomePage()
-  {
+  turnOnLocationUpdatesForHomePage() {
     positionStreamHomePage!.resume();
 
     Geofire.setLocation(
@@ -37,50 +50,48 @@ class CommonMethods
     );
   }
 
-  static sendRequestToAPI(String apiUrl) async
-  {
+  static sendRequestToAPI(String apiUrl) async {
     http.Response responseFromAPI = await http.get(Uri.parse(apiUrl));
 
-    try
-    {
-      if(responseFromAPI.statusCode == 200)
-      {
+    try {
+      if (responseFromAPI.statusCode == 200) {
         String dataFromApi = responseFromAPI.body;
         var dataDecoded = jsonDecode(dataFromApi);
         return dataDecoded;
-      }
-      else
-      {
+      } else {
         return "error";
       }
-    }
-    catch(errorMsg)
-    {
+    } catch (errorMsg) {
       return "error";
     }
   }
 
   ///Directions API
-  static Future<DirectionDetails?> getDirectionDetailsFromAPI(LatLng source, LatLng destination) async
-  {
-    String urlDirectionsAPI = "https://maps.googleapis.com/maps/api/directions/json?destination=${destination.latitude},${destination.longitude}&origin=${source.latitude},${source.longitude}&mode=driving&key=$googleMapKey";
+  static Future<DirectionDetails?> getDirectionDetailsFromAPI(
+      LatLng source, LatLng destination) async {
+    String urlDirectionsAPI =
+        "https://maps.googleapis.com/maps/api/directions/json?destination=${destination.latitude},${destination.longitude}&origin=${source.latitude},${source.longitude}&mode=driving&key=$googleMapKey";
 
     var responseFromDirectionsAPI = await sendRequestToAPI(urlDirectionsAPI);
 
-    if(responseFromDirectionsAPI == "error")
-    {
+    if (responseFromDirectionsAPI == "error") {
       return null;
     }
 
     DirectionDetails detailsModel = DirectionDetails();
 
-    detailsModel.distanceTextString = responseFromDirectionsAPI["routes"][0]["legs"][0]["distance"]["text"];
-    detailsModel.distanceValueDigits = responseFromDirectionsAPI["routes"][0]["legs"][0]["distance"]["value"];
+    detailsModel.distanceTextString =
+        responseFromDirectionsAPI["routes"][0]["legs"][0]["distance"]["text"];
+    detailsModel.distanceValueDigits =
+        responseFromDirectionsAPI["routes"][0]["legs"][0]["distance"]["value"];
 
-    detailsModel.durationTextString = responseFromDirectionsAPI["routes"][0]["legs"][0]["duration"]["text"];
-    detailsModel.durationValueDigits = responseFromDirectionsAPI["routes"][0]["legs"][0]["duration"]["value"];
+    detailsModel.durationTextString =
+        responseFromDirectionsAPI["routes"][0]["legs"][0]["duration"]["text"];
+    detailsModel.durationValueDigits =
+        responseFromDirectionsAPI["routes"][0]["legs"][0]["duration"]["value"];
 
-    detailsModel.encodedPoints = responseFromDirectionsAPI["routes"][0]["overview_polyline"]["points"];
+    detailsModel.encodedPoints =
+        responseFromDirectionsAPI["routes"][0]["overview_polyline"]["points"];
 
     return detailsModel;
   }

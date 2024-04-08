@@ -26,7 +26,7 @@ class _HomePageState extends State<HomePage> {
   final Completer<GoogleMapController> googleMapCompleterController =
       Completer<GoogleMapController>();
   GoogleMapController? controllerGoogleMap;
-  Position? currentPositionOfUser;
+  Position? currentPositionOfDriver;
   Color colorToShow = Colors.green;
   String titleToShow = "GO ONLINE NOW";
   bool isDriverAvailable = false;
@@ -211,10 +211,11 @@ void initState() {
   void getCurrentLiveLocationOfDriver() async {
     Position positionOfUser =
         await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.bestForNavigation);
-    currentPositionOfUser = positionOfUser;
+    currentPositionOfDriver = positionOfUser;
+    driverCurrentPosition = currentPositionOfDriver;
 
     LatLng positionOfUserInLatLng =
-        LatLng(currentPositionOfUser!.latitude, currentPositionOfUser!.longitude);
+        LatLng(currentPositionOfDriver!.latitude, currentPositionOfDriver!.longitude);
 
     CameraPosition cameraPosition =
         CameraPosition(target: positionOfUserInLatLng, zoom: 15);
@@ -225,12 +226,12 @@ void initState() {
 
   void setAndGetLocationUpdates() {
     positionStreamHomePage = Geolocator.getPositionStream().listen((Position position) async {
-      currentPositionOfUser = position;
+      currentPositionOfDriver = position;
 
       User? user = FirebaseAuth.instance.currentUser;
       if (user != null && isDriverAvailable) {
         try {
-          await Geofire.setLocation(user.uid, currentPositionOfUser!.latitude, currentPositionOfUser!.longitude);
+          await Geofire.setLocation(user.uid, currentPositionOfDriver!.latitude, currentPositionOfDriver!.longitude);
         } catch (e) {
           print("Error updating location: $e");
         }
