@@ -49,6 +49,7 @@ dependencies:
   http: ^1.2.1
   flutter_polyline_points: ^2.0.0
   url_launcher: ^6.2.5
+  restart_app:
 
 dev_dependencies:
   flutter_test:

@@ -19,3 +19,14 @@ StreamSubscription<Position>? positionStreamNewTripPage;
 int driverTripRequestTimeout = 22;
 final audioPlayer = AssetsAudioPlayer();
 Position? driverCurrentPosition;
+
+String firstName = "";
+String lastName = "";
+String idNumber = "";
+String bodyNumber = "";
+
+String driverPhone = "";
+String driverPhoto = "";
+String carColor = "";
+String carModel = "";
+String carNumber = "";

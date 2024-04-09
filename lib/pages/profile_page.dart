@@ -3,6 +3,26 @@ import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+// This function retrieves user data from Firebase without needing a controller.
+// It can be reused in any part of your project where user data needs to be fetched.
+Future<Map<String, dynamic>> retrieveUserData() async {
+  final DatabaseReference database = FirebaseDatabase.instance.reference();
+  final FirebaseAuth auth = FirebaseAuth.instance;
+  User? user = auth.currentUser;
+  if (user != null) {
+    final DatabaseEvent event = await database.child('driversAccount').orderByChild('uid').equalTo(user.uid).once();
+    final Map<dynamic, dynamic> data = event.snapshot.value as Map<dynamic, dynamic>;
+    final String userKey = data.keys.firstWhere((k) => data[k]['uid'] == user.uid, orElse: () => '');
+    if (userKey.isNotEmpty) {
+      final userData = Map<String, dynamic>.from(data[userKey]);
+      print('Retrieved user data: $userData'); // Print the retrieved data
+      return userData;
+    }
+  }
+  print('No user data found.');
+  return {};
+}
+
 
 class ProfilePage extends StatefulWidget {
   static const String id = "profilePage";
@@ -36,7 +56,6 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   void dispose() {
-    // Dispose of the controllers when the widget is removed from the widget tree
     controllers.forEach((key, controller) {
       controller.dispose();
     });
@@ -44,28 +63,19 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   void _getUserData() async {
-    User? user = _auth.currentUser;
-    if (user != null) {
-      _database.child('driversAccount').orderByChild('uid').equalTo(user.uid).once().then((DatabaseEvent event) {
-        Map<dynamic, dynamic> data = event.snapshot.value as Map<dynamic, dynamic>;
-        userKey = data.keys.firstWhere((k) => data[k]['uid'] == user.uid, orElse: () => null);
-        if (userKey != null) {
-          Map<String, dynamic> userData = Map<String, dynamic>.from(data[userKey]);
-          setState(() {
-            controllers['firstName']?.text = userData['firstName'] ?? '';
-            controllers['lastName']?.text = userData['lastName'] ?? '';
-            controllers['birthdate']?.text = userData['birthdate'] ?? '';
-            controllers['idNumber']?.text = userData['idNumber'] ?? '';
-            controllers['bodyNumber']?.text = userData['bodyNumber'] ?? '';
-            controllers['email']?.text = userData['email'] ?? '';
-          });
-        }
-      }).catchError((error) {
-        print('Error fetching user data: $error');
+    final userData = await retrieveUserData();
+    if (userData.isNotEmpty) {
+      setState(() {
+        userKey = userData['uid'] ?? '';
+        controllers['firstName']?.text = userData['firstName'] ?? '';
+        controllers['lastName']?.text = userData['lastName'] ?? '';
+        controllers['birthdate']?.text = userData['birthdate'] ?? '';
+        controllers['idNumber']?.text = userData['idNumber'] ?? '';
+        controllers['bodyNumber']?.text = userData['bodyNumber'] ?? '';
+        controllers['email']?.text = userData['email'] ?? '';
       });
     }
   }
-
   Future<void> _updateUserData() async {
     Map<String, dynamic> newData = {
       'firstName': controllers['firstName']?.text ?? '',

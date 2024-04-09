@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:driver/authentication/login_screen.dart';
 import 'package:driver/pages/dashboard.dart';
+import 'package:driver/pages/profile_page.dart';
 import 'package:driver/pushNotification/push_notification_system.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -12,6 +13,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_geofire/flutter_geofire.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:flutter/foundation.dart';
 
 import '../global/global_var.dart';
 
@@ -33,6 +35,9 @@ class _HomePageState extends State<HomePage> {
   DatabaseReference? newTripRequestReference;
 
   StreamSubscription<Position>? positionStreamHomePage;
+  final DatabaseReference _database = FirebaseDatabase.instance.reference();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  Map<String, dynamic> userData = {};
 
 @override
 void initState() {
@@ -52,12 +57,15 @@ void initState() {
 
   // Initialize push notification system
   initializePushNotificationSystem();
-  
+
+  // Call retrieveUserData and print the retrieved data
+  retrieveUserData().then((userData) {
+    print('Retrieved user data: $userData');
+  });
 }
 
 
-
-
+ 
 
   @override
   void dispose() {
@@ -174,10 +182,10 @@ void initState() {
                                       }
                                     },
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: (titleToShow ==
-                                              "GO ONLINE NOW")
-                                          ? Colors.green
-                                          : Colors.pink,
+                                      backgroundColor:
+                                          (titleToShow == "GO ONLINE NOW")
+                                              ? Colors.green
+                                              : Colors.pink,
                                     ),
                                     child: const Text("CONFIRM"),
                                   ),
@@ -209,29 +217,30 @@ void initState() {
   }
 
   void getCurrentLiveLocationOfDriver() async {
-    Position positionOfUser =
-        await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.bestForNavigation);
+    Position positionOfUser = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.bestForNavigation);
     currentPositionOfDriver = positionOfUser;
     driverCurrentPosition = currentPositionOfDriver;
 
-    LatLng positionOfUserInLatLng =
-        LatLng(currentPositionOfDriver!.latitude, currentPositionOfDriver!.longitude);
+    LatLng positionOfUserInLatLng = LatLng(
+        currentPositionOfDriver!.latitude, currentPositionOfDriver!.longitude);
 
     CameraPosition cameraPosition =
         CameraPosition(target: positionOfUserInLatLng, zoom: 15);
-    controllerGoogleMap!.animateCamera(CameraUpdate.newCameraPosition(cameraPosition));
+    controllerGoogleMap!
+        .animateCamera(CameraUpdate.newCameraPosition(cameraPosition));
   }
 
-
-
   void setAndGetLocationUpdates() {
-    positionStreamHomePage = Geolocator.getPositionStream().listen((Position position) async {
+    positionStreamHomePage =
+        Geolocator.getPositionStream().listen((Position position) async {
       currentPositionOfDriver = position;
 
       User? user = FirebaseAuth.instance.currentUser;
       if (user != null && isDriverAvailable) {
         try {
-          await Geofire.setLocation(user.uid, currentPositionOfDriver!.latitude, currentPositionOfDriver!.longitude);
+          await Geofire.setLocation(user.uid, currentPositionOfDriver!.latitude,
+              currentPositionOfDriver!.longitude);
         } catch (e) {
           print("Error updating location: $e");
         }
@@ -241,76 +250,71 @@ void initState() {
     });
   }
 
+  void goOnlineNow() async {
+    try {
+      User? user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        Position positionOfUser = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.bestForNavigation,
+        );
 
+        Geofire.initialize("onlineDrivers");
 
-void goOnlineNow() async {
-  try {
+        Geofire.setLocation(
+          user.uid,
+          positionOfUser.latitude,
+          positionOfUser.longitude,
+        );
+
+        DatabaseReference userRef = FirebaseDatabase.instance
+            .reference()
+            .child("driversAccount")
+            .child(user.uid);
+        userRef.child("newTripStatus").set("waiting");
+
+        DatabaseReference newTripRequestReference =
+            userRef.child("newTripStatus");
+        newTripRequestReference.onValue.listen((event) {});
+
+        setState(() {
+          colorToShow = Colors.pink;
+          titleToShow = "GO OFFLINE NOW";
+          isDriverAvailable = true;
+        });
+
+        print("User is now online.");
+      } else {
+        print('User is not authenticated.');
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+        );
+      }
+    } catch (e) {
+      print("Error going online: $e");
+    }
+  }
+
+  void goOfflineNow() {
     User? user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      Position positionOfUser = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.bestForNavigation,
-      );
+      // Stop sharing driver live location updates
+      Geofire.removeLocation(user.uid);
 
-      Geofire.initialize("onlineDrivers");
-
-      Geofire.setLocation(
-        user.uid,
-        positionOfUser.latitude,
-        positionOfUser.longitude,
-      );
-
-      DatabaseReference userRef = FirebaseDatabase.instance
+      // Stop listening to the newTripStatus
+      DatabaseReference? newTripRequestReference = FirebaseDatabase.instance
           .reference()
           .child("driversAccount")
-          .child(user.uid);
-      userRef.child("newTripStatus").set("waiting");
-
-      DatabaseReference newTripRequestReference =
-          userRef.child("newTripStatus");
-      newTripRequestReference.onValue.listen((event) {});
-
-      setState(() {
-        colorToShow = Colors.pink;
-        titleToShow = "GO OFFLINE NOW";
-        isDriverAvailable = true;
-      });
-
-      print("User is now online.");
-    } else {
-      print('User is not authenticated.');
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
-      );
+          .child(user.uid)
+          .child("newTripStatus");
+      newTripRequestReference.onDisconnect();
+      newTripRequestReference.remove();
     }
-  } catch (e) {
-    print("Error going online: $e");
   }
-}
 
-void goOfflineNow() {
-  User? user = FirebaseAuth.instance.currentUser;
-  if (user != null) {
-    // Stop sharing driver live location updates
-    Geofire.removeLocation(user.uid);
-
-    // Stop listening to the newTripStatus
-    DatabaseReference? newTripRequestReference = FirebaseDatabase.instance
-        .reference()
-        .child("driversAccount")
-        .child(user.uid)
-        .child("newTripStatus");
-    newTripRequestReference.onDisconnect();
-    newTripRequestReference.remove();
+  initializePushNotificationSystem() {
+    PushNotificationSystem notificationSystem = PushNotificationSystem();
+    notificationSystem.generateDeviceRegistrationToken();
+    notificationSystem.startListeningForNewNotification(context);
   }
-}
-
-initializePushNotificationSystem()
-{
-  PushNotificationSystem notificationSystem = PushNotificationSystem();
-  notificationSystem.generateDeviceRegistrationToken();
-  notificationSystem.startListeningForNewNotification(context);
-}
-
-
 }
