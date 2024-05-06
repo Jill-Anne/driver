@@ -12,8 +12,7 @@ class AdvanceBooking extends StatefulWidget {
 }
 
 class _AdvanceBookingState extends State<AdvanceBooking> {
-  final completedTripRequestsOfCurrentDriver =
-      FirebaseDatabase.instance.ref().child("tripRequests");
+  final tripRequestsRef = FirebaseDatabase.instance.ref().child("tripRequests");
 
   @override
   Widget build(BuildContext context) {
@@ -22,9 +21,9 @@ class _AdvanceBookingState extends State<AdvanceBooking> {
         title: const Text('Advance Booking'),
       ),
       body: StreamBuilder(
-        stream: completedTripRequestsOfCurrentDriver.onValue,
-        builder: (BuildContext context, snapshotData) {
-          if (snapshotData.hasError) {
+        stream: tripRequestsRef.onValue,
+        builder: (BuildContext context, AsyncSnapshot snapshot) {
+          if (snapshot.hasError) {
             return const Center(
               child: Text(
                 "Error Occurred.",
@@ -33,7 +32,7 @@ class _AdvanceBookingState extends State<AdvanceBooking> {
             );
           }
 
-          if (!(snapshotData.hasData)) {
+          if (!snapshot.hasData || snapshot.data?.snapshot.value == null) {
             return const Center(
               child: Text(
                 "No record found.",
@@ -42,86 +41,85 @@ class _AdvanceBookingState extends State<AdvanceBooking> {
             );
           }
 
-          Map dataTrips =
-              snapshotData.data!.snapshot.value as Map; // Retrieve trip data
+          Map dataTrips = snapshot.data!.snapshot.value as Map;
           List tripsList = [];
-          dataTrips.forEach((key, value) =>
-              tripsList.add({"key": key, ...value})); // Convert data to list
+          dataTrips.forEach((key, value) {
+            if (value.containsKey("tripStartDate") &&
+                value.containsKey("tripEndDate") &&
+                value["tripStartDate"] != null &&
+                value["tripEndDate"] != null &&
+                value["tripStartDate"] != "Not set" &&
+                value["tripEndDate"] != "Not set") {
+              tripsList.add({"key": key, ...value});
+            }
+          });
+
+          if (tripsList.isEmpty) {
+            return const Center(child: Text("No trips found with valid dates."));
+          }
 
           return ListView.builder(
             itemCount: tripsList.length,
             itemBuilder: (context, index) {
-              // Check if the trip is completed by the current driver
-              if (tripsList[index]["status"] != null &&
-                  tripsList[index]["status"] == "ended" &&
-                  tripsList[index]["driverID"] ==
-                      FirebaseAuth.instance.currentUser!.uid) {
-                // Create a TripDetails object from the fetched data
-                TripDetails tripDetails = TripDetails(
-                  tripID: tripsList[index]["key"],
-                  pickUpLatLng: LatLng(
-                    double.parse(tripsList[index]["pickUpLatLng"]["latitude"]),
-                    double.parse(tripsList[index]["pickUpLatLng"]["longitude"]),
-                  ),
-                  dropOffLatLng: LatLng(
-                    double.parse(tripsList[index]["dropOffLatLng"]["latitude"]),
-                    double.parse(
-                        tripsList[index]["dropOffLatLng"]["longitude"]),
-                  ),
-                  pickupAddress: tripsList[index]["pickUpAddress"],
-                  dropOffAddress: tripsList[index]["dropOffAddress"],
-                  userName: tripsList[index]["userName"],
-                  userPhone: tripsList[index]["userPhone"],
-                  tripStartDate: tripsList[index]["tripStartDate"] ?? "Not set",
-                  tripEndDate: tripsList[index]["tripEndDate"] ?? "Not set",
-                  tripTime: tripsList[index]["tripTime"] ?? "Not set",
-                );
-
-                // Display trip details in UI
-                return Card(
-                  color: Colors.white,
-                  elevation: 10,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "User: ${tripDetails.userName}",
-                          style: TextStyle(fontSize: 18),
-                        ),
-                        Text(
-                          "Pickup Address: ${tripDetails.pickupAddress}",
-                          style: TextStyle(fontSize: 18),
-                        ),
-                        Text(
-                          "Dropoff Address: ${tripDetails.dropOffAddress}",
-                          style: TextStyle(fontSize: 18),
-                        ),
-                        Text(
-                          "Trip Start Date: ${tripDetails.tripStartDate}",
-                          style: TextStyle(fontSize: 18),
-                        ),
-                        Text(
-                          "Trip End Date: ${tripDetails.tripEndDate}",
-                          style: TextStyle(fontSize: 18),
-                        ),
-                        Text(
-                          "Trip Time: ${tripDetails.tripTime}",
-                          style: TextStyle(fontSize: 18),
-                        ),
-                        // Add more trip details as needed
-                      ],
-                    ),
-                  ),
-                );
-              } else {
-                return Container();
-              }
+              return _buildTripCard(tripsList[index]);
             },
           );
         },
       ),
     );
+  }
+
+  Widget _buildTripCard(Map trip) {
+    return Card(
+      color: Colors.grey[900],
+      elevation: 10,
+      margin: const EdgeInsets.all(10),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("Start Date: ${trip["tripStartDate"]}",
+                style: const TextStyle(color: Colors.white)),
+            Text("End Date: ${trip["tripEndDate"]}",
+                style: const TextStyle(color: Colors.white)),
+            Text("Pick Up Location: ${trip["pickUpAddress"]}",
+                style: const TextStyle(color: Colors.white)),
+            Text("Drop Off Location: ${trip["dropOffAddress"]}",
+                style: const TextStyle(color: Colors.white)),
+            SizedBox(height: 10),
+            Text("Passenger Name: ${trip["userName"]}",
+                style: const TextStyle(color: Colors.white)),
+           
+
+            // Additional details as needed
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                ElevatedButton(
+                  onPressed: () => _deleteTrip(trip["key"]),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                  child: const Text('Delete'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _deleteTrip(String key) {
+    // Delete the trip entry from Firebase
+    tripRequestsRef.child(key).remove().then((_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Trip deleted successfully')),
+      );
+      setState(() {}); // Refresh the list after deletion
+    }).catchError((error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error deleting trip: $error')),
+      );
+    });
   }
 }
