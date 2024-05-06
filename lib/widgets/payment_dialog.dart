@@ -57,7 +57,7 @@ class _PaymentDialogState extends State<PaymentDialog>
             const SizedBox(height: 16,),
 
             Text(
-              "\$" + widget.fareAmount,
+              "₱" + widget.fareAmount,
               style: const TextStyle(
                 color: Colors.grey,
                 fontSize: 36,
@@ -70,7 +70,7 @@ class _PaymentDialogState extends State<PaymentDialog>
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Text(
-                "This is fare amount ( \$ ${widget.fareAmount} ) to be charged from the user.",
+                "This is fare amount ( ₱ ${widget.fareAmount} ) to be charged from the passenger.",
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: Colors.grey

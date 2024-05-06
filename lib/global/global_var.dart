@@ -9,7 +9,7 @@ String userName = "";
 String googleMapKey = "AIzaSyCkLt8ILMXSFRP12xS8P7830kGNBeGn47s";
 
 const CameraPosition googlePlexInitialPosition = CameraPosition(
-  target: LatLng(37.42796133580664, -122.085749655962),
+  target: LatLng(14.726650, 120.943440),
   zoom: 14.4746,
 );
 

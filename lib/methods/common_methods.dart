@@ -110,4 +110,6 @@ class CommonMethods {
 
     return overAllTotalFareAmount.toStringAsFixed(1);
   }
+
+  
 }

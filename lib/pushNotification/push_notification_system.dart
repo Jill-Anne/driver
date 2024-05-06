@@ -1,4 +1,3 @@
-
 import 'package:assets_audio_player/assets_audio_player.dart';
 import 'package:driver/global/global_var.dart';
 import 'package:driver/models/trip_details.dart';
@@ -10,16 +9,16 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:intl/intl.dart';
 
-class PushNotificationSystem
-{
+class PushNotificationSystem {
   FirebaseMessaging firebaseCloudMessaging = FirebaseMessaging.instance;
 
-  Future<String?> generateDeviceRegistrationToken() async
-  {
+  Future<String?> generateDeviceRegistrationToken() async {
     String? deviceRecognitionToken = await firebaseCloudMessaging.getToken();
-    
-    DatabaseReference referenceOnlineDriver = FirebaseDatabase.instance.ref()
+
+    DatabaseReference referenceOnlineDriver = FirebaseDatabase.instance
+        .ref()
         .child("driversAccount")
         .child(FirebaseAuth.instance.currentUser!.uid)
         .child("deviceToken");
@@ -30,14 +29,13 @@ class PushNotificationSystem
     firebaseCloudMessaging.subscribeToTopic("users");
   }
 
-  startListeningForNewNotification(BuildContext context) async
-  {
+  startListeningForNewNotification(BuildContext context) async {
     ///1. Terminated
     //When the app is completely closed and it receives a push notification
-    FirebaseMessaging.instance.getInitialMessage().then((RemoteMessage? messageRemote)
-    {
-      if(messageRemote != null)
-      {
+    FirebaseMessaging.instance
+        .getInitialMessage()
+        .then((RemoteMessage? messageRemote) {
+      if (messageRemote != null) {
         String tripID = messageRemote.data["tripID"];
 
         retrieveTripRequestInfo(tripID, context);
@@ -46,10 +44,8 @@ class PushNotificationSystem
 
     ///2. Foreground
     //When the app is open and it receives a push notification
-    FirebaseMessaging.onMessage.listen((RemoteMessage? messageRemote)
-    {
-      if(messageRemote != null)
-      {
+    FirebaseMessaging.onMessage.listen((RemoteMessage? messageRemote) {
+      if (messageRemote != null) {
         String tripID = messageRemote.data["tripID"];
 
         retrieveTripRequestInfo(tripID, context);
@@ -58,10 +54,8 @@ class PushNotificationSystem
 
     ///3. Background
     //When the app is in the background and it receives a push notification
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage? messageRemote)
-    {
-      if(messageRemote != null)
-      {
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage? messageRemote) {
+      if (messageRemote != null) {
         String tripID = messageRemote.data["tripID"];
 
         retrieveTripRequestInfo(tripID, context);
@@ -69,50 +63,50 @@ class PushNotificationSystem
     });
   }
 
-  retrieveTripRequestInfo(String tripID, BuildContext context)
-  {
+  retrieveTripRequestInfo(String tripID, BuildContext context) {
     showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (BuildContext context) => LoadingDialog(messageText: "getting details..."),
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) => LoadingDialog(messageText: "Getting details..."),
     );
 
     DatabaseReference tripRequestsRef = FirebaseDatabase.instance.ref().child("tripRequests").child(tripID);
 
-    tripRequestsRef.once().then((dataSnapshot)
-    {
+    tripRequestsRef.once().then((dataSnapshot) {
       Navigator.pop(context);
 
-      audioPlayer.open(
-        Audio(
-          "assets/audio/alert_sound.mp3"
-        ),
-      );
-
+      audioPlayer.open(Audio("assets/audio/alert_sound.mp3"));
       audioPlayer.play();
 
-      TripDetails tripDetailsInfo = TripDetails();
-      double pickUpLat = double.parse((dataSnapshot.snapshot.value! as Map)["pickUpLatLng"]["latitude"]);
-      double pickUpLng = double.parse((dataSnapshot.snapshot.value! as Map)["pickUpLatLng"]["longitude"]);
-      tripDetailsInfo.pickUpLatLng = LatLng(pickUpLat, pickUpLng);
+      if (dataSnapshot.snapshot.value != null) {
+        final tripMap = Map<String, dynamic>.from(dataSnapshot.snapshot.value as Map);
 
-      tripDetailsInfo.pickupAddress = (dataSnapshot.snapshot.value! as Map)["pickUpAddress"];
+        TripDetails tripDetailsInfo = TripDetails(
+          tripID: tripID,
+          pickUpLatLng: LatLng(
+            double.parse(tripMap["pickUpLatLng"]["latitude"]),
+            double.parse(tripMap["pickUpLatLng"]["longitude"])
+          ),
+          dropOffLatLng: LatLng(
+            double.parse(tripMap["dropOffLatLng"]["latitude"]),
+            double.parse(tripMap["dropOffLatLng"]["longitude"])
+          ),
+          pickupAddress: tripMap["pickUpAddress"],
+          dropOffAddress: tripMap["dropOffAddress"],
+          userName: tripMap["userName"],
+          userPhone: tripMap["userPhone"],
+          tripStartDate: tripMap["tripStartDate"] ?? "Not set",
+          tripEndDate: tripMap["tripEndDate"] ?? "Not set",
+          tripTime: tripMap["tripTime"] ?? "Not set"
+        );
 
-      double dropOffLat = double.parse((dataSnapshot.snapshot.value! as Map)["dropOffLatLng"]["latitude"]);
-      double dropOffLng = double.parse((dataSnapshot.snapshot.value! as Map)["dropOffLatLng"]["longitude"]);
-      tripDetailsInfo.dropOffLatLng = LatLng(dropOffLat, dropOffLng);
-
-      tripDetailsInfo.dropOffAddress = (dataSnapshot.snapshot.value! as Map)["dropOffAddress"];
-
-      tripDetailsInfo.userName = (dataSnapshot.snapshot.value! as Map)["userName"];
-      tripDetailsInfo.userPhone = (dataSnapshot.snapshot.value! as Map)["userPhone"];
-
-      tripDetailsInfo.tripID = tripID;
-
-      showDialog(
+        showDialog(
           context: context,
-          builder: (BuildContext context) => NotificationDialog(tripDetailsInfo: tripDetailsInfo,),
-      );
+          builder: (BuildContext context) => NotificationDialog(tripDetailsInfo: tripDetailsInfo),
+        );
+      } else {
+        print("No data available for tripID $tripID");
+      }
     });
   }
 }

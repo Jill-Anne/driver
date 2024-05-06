@@ -335,7 +335,7 @@ class _NewTripPageState extends State<NewTripPage>
     });
   }
 
- Future<void> saveDriverDataToTripInfo() async {
+Future<void> saveDriverDataToTripInfo() async {
   // Retrieve user data
   Map<String, dynamic> userData = await retrieveUserData();
 
@@ -356,21 +356,36 @@ class _NewTripPageState extends State<NewTripPage>
       "bodyNumber": bodyNumber,
     };
 
-    Map<String, dynamic> driverCurrentLocation = {
-      'latitude': driverCurrentPosition!.latitude.toString(),
-      'longitude': driverCurrentPosition!.longitude.toString(),
-    };
+    // Print driver data for debugging
+    print('Driver Data:');
+    print(driverDataMap);
 
+    // Update trip request with driver data
     await FirebaseDatabase.instance.ref()
         .child("tripRequests")
         .child(widget.newTripDetailsInfo!.tripID!)
         .update(driverDataMap);
 
+    // Get current driver location
+    Map<String, dynamic> driverCurrentLocation = {
+      'latitude': driverCurrentPosition!.latitude.toString(),
+      'longitude': driverCurrentPosition!.longitude.toString(),
+    };
+
+    // Print current driver location for debugging
+    print('Driver Current Location:');
+    print(driverCurrentLocation);
+
+    // Update trip request with driver's current location
     await FirebaseDatabase.instance.ref()
         .child("tripRequests")
         .child(widget.newTripDetailsInfo!.tripID!)
         .child("driverLocation").update(driverCurrentLocation);
+
+    // Print success message
+    print('Driver data and location saved successfully.');
   } else {
+    // Print error message if no user data found
     print("Error: No user data found.");
   }
 }
@@ -379,9 +394,10 @@ class _NewTripPageState extends State<NewTripPage>
   @override
   void initState() {
     // TODO: implement initState
+    saveDriverDataToTripInfo();
     super.initState();
 
-    saveDriverDataToTripInfo();
+    //saveDriverDataToTripInfo();
   }
 
   @override
