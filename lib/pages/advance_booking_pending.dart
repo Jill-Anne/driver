@@ -1,18 +1,44 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:driver/pages/profile_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:driver/models/trip_details.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:intl/intl.dart';
 
 class AdvanceBooking extends StatefulWidget {
-  const AdvanceBooking({Key? key}) : super(key: key);
+  const AdvanceBooking({super.key});
 
   @override
   _AdvanceBookingState createState() => _AdvanceBookingState();
 }
 
 class _AdvanceBookingState extends State<AdvanceBooking> {
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    _getUserData();
+  }
+
   final tripRequestsRef = FirebaseDatabase.instance.ref().child("tripRequests");
+
+  String name = '';
+  String bodynumber = '';
+  String id = '';
+
+  void _getUserData() async {
+    final userData = await retrieveUserData();
+    if (userData.isNotEmpty) {
+      setState(() {
+        name = userData['firstName'] ?? '';
+
+        id = userData['idNumber'] ?? '';
+        bodynumber = userData['bodyNumber'] ?? '';
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,48 +46,32 @@ class _AdvanceBookingState extends State<AdvanceBooking> {
       appBar: AppBar(
         title: const Text('Advance Booking'),
       ),
-      body: StreamBuilder(
-        stream: tripRequestsRef.onValue,
-        builder: (BuildContext context, AsyncSnapshot snapshot) {
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('Advance Bookings')
+            .where('status', isEqualTo: 'Pending')
+            .snapshots(),
+        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.hasError) {
-            return const Center(
-              child: Text(
-                "Error Occurred.",
-                style: TextStyle(color: Colors.black),
-              ),
+            print(snapshot.error);
+            return const Center(child: Text('Error'));
+          }
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Padding(
+              padding: EdgeInsets.only(top: 50),
+              child: Center(
+                  child: CircularProgressIndicator(
+                color: Colors.black,
+              )),
             );
           }
 
-          if (!snapshot.hasData || snapshot.data?.snapshot.value == null) {
-            return const Center(
-              child: Text(
-                "No record found.",
-                style: TextStyle(color: Colors.black),
-              ),
-            );
-          }
-
-          Map dataTrips = snapshot.data!.snapshot.value as Map;
-          List tripsList = [];
-          dataTrips.forEach((key, value) {
-            if (value.containsKey("tripStartDate") &&
-                value.containsKey("tripEndDate") &&
-                value["tripStartDate"] != null &&
-                value["tripEndDate"] != null &&
-                value["tripStartDate"] != "Not set" &&
-                value["tripEndDate"] != "Not set") {
-              tripsList.add({"key": key, ...value});
-            }
-          });
-
-          if (tripsList.isEmpty) {
-            return const Center(child: Text("No trips found with valid dates."));
-          }
+          final data = snapshot.requireData;
 
           return ListView.builder(
-            itemCount: tripsList.length,
+            itemCount: data.docs.length,
             itemBuilder: (context, index) {
-              return _buildTripCard(tripsList[index]);
+              return _buildTripCard(data.docs[index]);
             },
           );
         },
@@ -69,7 +79,7 @@ class _AdvanceBookingState extends State<AdvanceBooking> {
     );
   }
 
-  Widget _buildTripCard(Map trip) {
+  Widget _buildTripCard(trip) {
     return Card(
       color: Colors.grey[900],
       elevation: 10,
@@ -79,27 +89,39 @@ class _AdvanceBookingState extends State<AdvanceBooking> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("Start Date: ${trip["tripStartDate"]}",
+            Text(
+                "Start Date: ${DateFormat.yMMMd().add_jm().format(trip['date'].toDate())}",
                 style: const TextStyle(color: Colors.white)),
-            Text("End Date: ${trip["tripEndDate"]}",
+            Text(
+                "End Date: ${DateFormat.yMMMd().add_jm().format(trip['date'].toDate())}",
                 style: const TextStyle(color: Colors.white)),
-            Text("Pick Up Location: ${trip["pickUpAddress"]}",
+            Text("Pick Up Location: ${trip["from"]}",
                 style: const TextStyle(color: Colors.white)),
-            Text("Drop Off Location: ${trip["dropOffAddress"]}",
+            Text("Drop Off Location: ${trip["to"]}",
                 style: const TextStyle(color: Colors.white)),
-            SizedBox(height: 10),
-            Text("Passenger Name: ${trip["userName"]}",
+            const SizedBox(height: 10),
+            Text("Passenger Name: ${trip["name"]}",
                 style: const TextStyle(color: Colors.white)),
-           
 
             // Additional details as needed
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 ElevatedButton(
-                  onPressed: () => _deleteTrip(trip["key"]),
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                  child: const Text('Delete'),
+                  onPressed: () async {
+                    await FirebaseFirestore.instance
+                        .collection('Advance Bookings')
+                        .doc(trip.id)
+                        .update({
+                      'status': 'Accepted',
+                      'drivername': name,
+                      'driverid': id,
+                      'driverbodynumber': bodynumber,
+                    });
+                  },
+                  style:
+                      ElevatedButton.styleFrom(backgroundColor: Colors.white),
+                  child: const Text('Accept'),
                 ),
               ],
             ),

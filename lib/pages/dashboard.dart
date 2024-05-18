@@ -1,13 +1,16 @@
+import 'package:driver/pages/advance_booking_pending.dart';
 import 'package:flutter/material.dart';
 import 'package:driver/pages/home_page.dart';
 import 'package:driver/pages/profile_page.dart';
 import 'package:driver/pages/trips_page.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -19,30 +22,32 @@ class MyApp extends StatelessWidget {
       initialRoute: '/',
       routes: {
         // Define the routes
-        '/': (context) => Dashboard(),
-        '/home': (context) => HomePage(),
-        '/trips': (context) => TripsPage(),
-        '/profile': (context) => ProfilePage(),
+        '/': (context) => const Dashboard(),
+        '/home': (context) => const HomePage(),
+        '/advance': (context) => const AdvanceBooking(),
+        '/trips': (context) => const TripsPage(),
+        '/profile': (context) => const ProfilePage(),
       },
     );
   }
 }
 
 class Dashboard extends StatefulWidget {
-  const Dashboard({Key? key}) : super(key: key);
+  const Dashboard({super.key});
 
   @override
   State<Dashboard> createState() => _DashboardState();
 }
 
-class _DashboardState extends State<Dashboard> with SingleTickerProviderStateMixin {
+class _DashboardState extends State<Dashboard>
+    with SingleTickerProviderStateMixin {
   late TabController controller;
   int indexSelected = 0;
 
   @override
   void initState() {
     super.initState();
-    controller = TabController(length: 3, vsync: this);
+    controller = TabController(length: 4, vsync: this);
   }
 
   @override
@@ -66,6 +71,7 @@ class _DashboardState extends State<Dashboard> with SingleTickerProviderStateMix
         controller: controller,
         children: const [
           HomePage(),
+          AdvanceBooking(),
           TripsPage(),
           ProfilePage(),
         ],
@@ -73,7 +79,10 @@ class _DashboardState extends State<Dashboard> with SingleTickerProviderStateMix
       bottomNavigationBar: BottomNavigationBar(
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-          BottomNavigationBarItem(icon: Icon(Icons.account_tree), label: "Trips"),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.timelapse_rounded), label: "Advance Bookings"),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.account_tree), label: "Trips"),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
         ],
         currentIndex: indexSelected,
