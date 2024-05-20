@@ -14,6 +14,7 @@ import 'package:flutter_geofire/flutter_geofire.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../global/global_var.dart';
 
@@ -39,33 +40,31 @@ class _HomePageState extends State<HomePage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   Map<String, dynamic> userData = {};
 
-@override
-void initState() {
-  super.initState();
+  @override
+  void initState() {
+    super.initState();
 
-  // Listen to authentication state changes
-  FirebaseAuth.instance.authStateChanges().listen((User? user) {
-    if (user != null) {
-      print('User is authenticated: ${user.uid}');
-    } else {
-      print('User is not authenticated.');
-    }
-  });
+    // Listen to authentication state changes
+    FirebaseAuth.instance.authStateChanges().listen((User? user) {
+      if (user != null) {
+        print('User is authenticated: ${user.uid}');
+      } else {
+        print('User is not authenticated.');
+      }
+    });
 
-  // Initialize Geofire
-  Geofire.initialize('driversLocation');
+    // Initialize Geofire
+    Geofire.initialize('driversLocation');
 
-  // Initialize push notification system
-  initializePushNotificationSystem();
+    // Initialize push notification system
+    initializePushNotificationSystem();
 
-  // Call retrieveUserData and print the retrieved data
-  retrieveUserData().then((userData) {
-    print('Retrieved user data: $userData');
-  });
-}
-
-
- 
+    // Call retrieveUserData and print the retrieved data
+    retrieveUserData().then((userData) {
+      print('Retrieved user data: $userData');
+    });
+    getOnlineStatus();
+  }
 
   @override
   void dispose() {
@@ -250,6 +249,53 @@ void initState() {
     });
   }
 
+  void goOfflineNow() async {
+    try {
+      User? user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        // Stop sharing driver live location updates
+        Geofire.removeLocation(user.uid);
+
+        // Stop listening to the newTripStatus
+        DatabaseReference? newTripRequestReference = FirebaseDatabase.instance
+            .reference()
+            .child("driversAccount")
+            .child(user.uid)
+            .child("newTripStatus");
+        newTripRequestReference.onDisconnect().remove();
+
+        // Remove the user from "onlineDrivers"
+        Geofire.removeLocation(user.uid);
+      }
+
+      await setOnlineStatus(false);
+
+      setState(() {
+        colorToShow = Colors.green;
+        titleToShow = "GO ONLINE NOW";
+        isDriverAvailable = false;
+      });
+
+      print("User is now offline.");
+    } catch (e) {
+      print("Error going offline: $e");
+    }
+  }
+
+  Future<void> getOnlineStatus() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      isDriverAvailable = prefs.getBool('isDriverAvailable') ?? false;
+      colorToShow = isDriverAvailable ? Colors.pink : Colors.green;
+      titleToShow = isDriverAvailable ? "GO OFFLINE NOW" : "GO ONLINE NOW";
+    });
+  }
+
+  Future<void> setOnlineStatus(bool status) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isDriverAvailable', status);
+  }
+
   void goOnlineNow() async {
     try {
       User? user = FirebaseAuth.instance.currentUser;
@@ -276,6 +322,8 @@ void initState() {
             userRef.child("newTripStatus");
         newTripRequestReference.onValue.listen((event) {});
 
+        await setOnlineStatus(true);
+
         setState(() {
           colorToShow = Colors.pink;
           titleToShow = "GO OFFLINE NOW";
@@ -292,23 +340,6 @@ void initState() {
       }
     } catch (e) {
       print("Error going online: $e");
-    }
-  }
-
-  void goOfflineNow() {
-    User? user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      // Stop sharing driver live location updates
-      Geofire.removeLocation(user.uid);
-
-      // Stop listening to the newTripStatus
-      DatabaseReference? newTripRequestReference = FirebaseDatabase.instance
-          .reference()
-          .child("driversAccount")
-          .child(user.uid)
-          .child("newTripStatus");
-      newTripRequestReference.onDisconnect();
-      newTripRequestReference.remove();
     }
   }
 

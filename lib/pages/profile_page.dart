@@ -50,8 +50,10 @@ class _ProfilePageState extends State<ProfilePage> {
       'idNumber': TextEditingController(),
       'bodyNumber': TextEditingController(),
       'email': TextEditingController(),
+      'phoneNumber': TextEditingController(), // Added phone number controller
     };
     _getUserData();
+    _listenUserDataChanges(); // Listen to changes in user data
   }
 
   @override
@@ -73,9 +75,32 @@ class _ProfilePageState extends State<ProfilePage> {
         controllers['idNumber']?.text = userData['idNumber'] ?? '';
         controllers['bodyNumber']?.text = userData['bodyNumber'] ?? '';
         controllers['email']?.text = userData['email'] ?? '';
+        controllers['phoneNumber']?.text = userData['phoneNumber'] ?? ''; // Set phone number text
       });
     }
   }
+void _listenUserDataChanges() {
+  _database.child('driversAccount').child(userKey).onValue.listen((event) {
+    final Map<dynamic, dynamic>? userDataMap = event.snapshot.value as Map<dynamic, dynamic>?;
+
+    if (userDataMap != null) {
+      final userData = Map<String, dynamic>.from(userDataMap);
+      setState(() {
+        controllers['firstName']?.text = userData['firstName'] ?? '';
+        controllers['lastName']?.text = userData['lastName'] ?? '';
+        controllers['birthdate']?.text = userData['birthdate'] ?? '';
+        controllers['idNumber']?.text = userData['idNumber'] ?? '';
+        controllers['bodyNumber']?.text = userData['bodyNumber'] ?? '';
+        controllers['email']?.text = userData['email'] ?? '';
+        controllers['phoneNumber']?.text = userData['phoneNumber'] ?? ''; // Set phone number text
+      });
+    } else {
+      // Handle null case or set default values if needed
+    }
+  });
+}
+
+
   Future<void> _updateUserData() async {
     Map<String, dynamic> newData = {
       'firstName': controllers['firstName']?.text ?? '',
@@ -84,6 +109,7 @@ class _ProfilePageState extends State<ProfilePage> {
       'idNumber': controllers['idNumber']?.text ?? '',
       'bodyNumber': controllers['bodyNumber']?.text ?? '',
       'email': controllers['email']?.text ?? '',
+      'phoneNumber': controllers['phoneNumber']?.text ?? '', // Include phone number in update
     };
 
     await _database.child('driversAccount').child(userKey).update(newData).then((_) {
