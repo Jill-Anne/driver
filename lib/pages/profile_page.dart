@@ -1,28 +1,37 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:driver/authentication/login_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+import 'package:permission_handler/permission_handler.dart';
 
-// This function retrieves user data from Firebase without needing a controller.
-// It can be reused in any part of your project where user data needs to be fetched.
 Future<Map<String, dynamic>> retrieveUserData() async {
   final DatabaseReference database = FirebaseDatabase.instance.reference();
   final FirebaseAuth auth = FirebaseAuth.instance;
   User? user = auth.currentUser;
   if (user != null) {
-    final DatabaseEvent event = await database.child('driversAccount').orderByChild('uid').equalTo(user.uid).once();
-    final Map<dynamic, dynamic> data = event.snapshot.value as Map<dynamic, dynamic>;
-    final String userKey = data.keys.firstWhere((k) => data[k]['uid'] == user.uid, orElse: () => '');
+    final DatabaseEvent event = await database
+        .child('driversAccount')
+        .orderByChild('uid')
+        .equalTo(user.uid)
+        .once();
+    final Map<dynamic, dynamic> data =
+        event.snapshot.value as Map<dynamic, dynamic>;
+    final String userKey = data.keys
+        .firstWhere((k) => data[k]['uid'] == user.uid, orElse: () => '');
     if (userKey.isNotEmpty) {
       final userData = Map<String, dynamic>.from(data[userKey]);
-      print('Retrieved user data: $userData'); // Print the retrieved data
+      userData['key'] = userKey;
+      print('Retrieved user data: $userData');
       return userData;
     }
   }
   print('No user data found.');
   return {};
 }
-
 
 class ProfilePage extends StatefulWidget {
   static const String id = "profilePage";
@@ -36,9 +45,13 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   final DatabaseReference _database = FirebaseDatabase.instance.reference();
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final ImagePicker _picker = ImagePicker();
 
   Map<String, TextEditingController> controllers = {};
   String userKey = '';
+  File? _imageFile;
+  String? _driverPhotoUrl;
+  bool _loadingImage = false;
 
   @override
   void initState() {
@@ -50,10 +63,9 @@ class _ProfilePageState extends State<ProfilePage> {
       'idNumber': TextEditingController(),
       'bodyNumber': TextEditingController(),
       'email': TextEditingController(),
-      'phoneNumber': TextEditingController(), // Added phone number controller
+      'phoneNumber': TextEditingController(),
     };
     _getUserData();
-    _listenUserDataChanges(); // Listen to changes in user data
   }
 
   @override
@@ -68,38 +80,18 @@ class _ProfilePageState extends State<ProfilePage> {
     final userData = await retrieveUserData();
     if (userData.isNotEmpty) {
       setState(() {
-        userKey = userData['uid'] ?? '';
+        userKey = userData['key'] ?? '';
         controllers['firstName']?.text = userData['firstName'] ?? '';
         controllers['lastName']?.text = userData['lastName'] ?? '';
         controllers['birthdate']?.text = userData['birthdate'] ?? '';
         controllers['idNumber']?.text = userData['idNumber'] ?? '';
         controllers['bodyNumber']?.text = userData['bodyNumber'] ?? '';
         controllers['email']?.text = userData['email'] ?? '';
-        controllers['phoneNumber']?.text = userData['phoneNumber'] ?? ''; // Set phone number text
+        controllers['phoneNumber']?.text = userData['phoneNumber'] ?? '';
+        _driverPhotoUrl = userData['driverPhoto'];
       });
     }
   }
-void _listenUserDataChanges() {
-  _database.child('driversAccount').child(userKey).onValue.listen((event) {
-    final Map<dynamic, dynamic>? userDataMap = event.snapshot.value as Map<dynamic, dynamic>?;
-
-    if (userDataMap != null) {
-      final userData = Map<String, dynamic>.from(userDataMap);
-      setState(() {
-        controllers['firstName']?.text = userData['firstName'] ?? '';
-        controllers['lastName']?.text = userData['lastName'] ?? '';
-        controllers['birthdate']?.text = userData['birthdate'] ?? '';
-        controllers['idNumber']?.text = userData['idNumber'] ?? '';
-        controllers['bodyNumber']?.text = userData['bodyNumber'] ?? '';
-        controllers['email']?.text = userData['email'] ?? '';
-        controllers['phoneNumber']?.text = userData['phoneNumber'] ?? ''; // Set phone number text
-      });
-    } else {
-      // Handle null case or set default values if needed
-    }
-  });
-}
-
 
   Future<void> _updateUserData() async {
     Map<String, dynamic> newData = {
@@ -109,19 +101,92 @@ void _listenUserDataChanges() {
       'idNumber': controllers['idNumber']?.text ?? '',
       'bodyNumber': controllers['bodyNumber']?.text ?? '',
       'email': controllers['email']?.text ?? '',
-      'phoneNumber': controllers['phoneNumber']?.text ?? '', // Include phone number in update
+      'phoneNumber': controllers['phoneNumber']?.text ?? '',
     };
 
-    await _database.child('driversAccount').child(userKey).update(newData).then((_) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Profile updated successfully.')));
-    }).catchError((error) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error updating profile: $error')));
-    });
+    await _database.child('driversAccount').child(userKey).update(newData);
+  }
+
+  Future<void> _pickImage() async {
+    var status = await Permission.storage.status;
+    if (!status.isGranted) {
+      await Permission.storage.request();
+    }
+
+    if (await Permission.storage.isGranted) {
+      final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+      if (pickedFile != null) {
+        setState(() {
+          _imageFile = File(pickedFile.path);
+        });
+        await _uploadDriverPhoto(_imageFile!);
+      }
+    } else {
+      print('Storage permission not granted');
+      _showPermissionDeniedDialog();
+    }
+  }
+
+  Future<void> _uploadDriverPhoto(File imageFile) async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      print('User is not authenticated.');
+      return;
+    }
+
+    try {
+      setState(() {
+        _loadingImage = true; // Set loading state while uploading
+      });
+
+      final storageReference =
+          FirebaseStorage.instance.ref().child('driver_photos/${user.uid}.jpg');
+      final uploadTask = storageReference.putFile(imageFile);
+
+      final TaskSnapshot taskSnapshot = await uploadTask.whenComplete(() {});
+      final photoUrl = await taskSnapshot.ref.getDownloadURL();
+
+      await _database
+          .child('driversAccount')
+          .child(userKey)
+          .update({'driverPhoto': photoUrl});
+
+      setState(() {
+        _driverPhotoUrl = photoUrl;
+        _loadingImage = false; // Reset loading state after uploading
+      });
+    } catch (e) {
+      print('Error uploading driver photo: $e');
+      setState(() {
+        _loadingImage = false; // Reset loading state on error
+      });
+    }
+  }
+
+  void _showPermissionDeniedDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Permission Denied'),
+          content: const Text('This app needs photo access to upload profile pictures.'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _logout() async {
     await _auth.signOut();
-    Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (context) => LoginScreen()), (route) => false);
+    Navigator.pushReplacement(
+        context, MaterialPageRoute(builder: (context) => const LoginScreen()));
   }
 
   @override
@@ -131,30 +196,62 @@ void _listenUserDataChanges() {
         title: Text('Profile'),
         actions: [
           IconButton(
+            icon: Icon(Icons.save),
+            onPressed: _updateUserData,
+          ),
+          IconButton(
             icon: Icon(Icons.logout),
             onPressed: _logout,
-            tooltip: 'Logout',
           ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16.0),
-        children: <Widget>[
-          ...controllers.keys.map((String field) {
-            return TextField(
-              controller: controllers[field],
-              decoration: InputDecoration(
-                labelText: field[0].toUpperCase() + field.substring(1), // Capitalize label
+      body: SingleChildScrollView(
+        padding: EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+           CachedNetworkImage(
+              imageUrl: _driverPhotoUrl ?? '',
+              placeholder: (context, url) => CircularProgressIndicator(),
+              errorWidget: (context, url, error) => Icon(Icons.error),
+              imageBuilder: (context, imageProvider) => CircleAvatar(
+                radius: 50,
+                backgroundImage: imageProvider,
               ),
-              keyboardType: field == 'email' ? TextInputType.emailAddress : TextInputType.text,
-            );
-          }),
-          SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: _updateUserData,
-            child: Text('Save Changes'),
-          ),
-        ],
+            ),
+            TextButton(
+              onPressed: _pickImage,
+              child: Text('Upload Profile Picture'),
+            ),
+            TextFormField(
+              controller: controllers['firstName'],
+              decoration: InputDecoration(labelText: 'First Name'),
+            ),
+            TextFormField(
+              controller: controllers['lastName'],
+              decoration: InputDecoration(labelText: 'Last Name'),
+            ),
+            TextFormField(
+              controller: controllers['birthdate'],
+              decoration: InputDecoration(labelText: 'Birthdate'),
+            ),
+            TextFormField(
+              controller: controllers['idNumber'],
+              decoration: InputDecoration(labelText: 'ID Number'),
+            ),
+            TextFormField(
+              controller: controllers['bodyNumber'],
+              decoration: InputDecoration(labelText: 'Body Number'),
+            ),
+            TextFormField(
+              controller: controllers['email'],
+              decoration: InputDecoration(labelText: 'Email'),
+            ),
+            TextFormField(
+              controller: controllers['phoneNumber'],
+              decoration: InputDecoration(labelText: 'Phone Number'),
+            ),
+          ],
+        ),
       ),
     );
   }

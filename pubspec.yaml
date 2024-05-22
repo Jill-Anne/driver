@@ -52,6 +52,10 @@ dependencies:
   restart_app:
   intl: ^0.18.1
   shared_preferences: ^2.2.3
+  firebase_storage: ^11.7.5
+  image_picker: ^1.1.1
+  firebase_app_check: ^0.2.2+5
+  cached_network_image: ^3.3.1
 
 dev_dependencies:
   flutter_test:
