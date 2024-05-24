@@ -1,4 +1,5 @@
 import 'package:driver/pages/advance_booking_pending.dart';
+import 'package:driver/pages/new_advance_booking_pending.dart';
 import 'package:driver/pages/trips_history_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -54,7 +55,7 @@ class _TripsPageState extends State<TripsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-       body: SingleChildScrollView(
+        body: SingleChildScrollView(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -102,7 +103,7 @@ class _TripsPageState extends State<TripsPage> {
           GestureDetector(
             onTap: () {
               Navigator.push(context,
-                  MaterialPageRoute(builder: (c) => TripsHistoryPage()));
+                  MaterialPageRoute(builder: (c) => const TripsHistoryPage()));
             },
             child: Center(
               child: Container(
@@ -139,8 +140,8 @@ class _TripsPageState extends State<TripsPage> {
           //check trip history
           GestureDetector(
             onTap: () {
-              Navigator.push(
-                  context, MaterialPageRoute(builder: (c) => AdvanceBooking()));
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (c) => const NewAdvanceBooking()));
             },
             child: Center(
               child: Container(
@@ -172,7 +173,6 @@ class _TripsPageState extends State<TripsPage> {
           ),
         ],
       ),
-       )
-    );
+    ));
   }
 }

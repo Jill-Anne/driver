@@ -82,7 +82,7 @@ class _AdvanceBookingState extends State<AdvanceBooking> {
 
   Widget _buildTripCard(trip) {
     return Card(
-      color: Colors.grey[900],
+      color: Colors.grey[200],
       elevation: 10,
       margin: const EdgeInsets.all(10),
       child: Padding(
@@ -90,158 +90,41 @@ class _AdvanceBookingState extends State<AdvanceBooking> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-                "Start Date: ${DateFormat.yMMMd().add_jm().format(trip['date'].toDate())}",
-                style: const TextStyle(color: Colors.white)),
-            Text(
-                "End Date: ${DateFormat.yMMMd().add_jm().format(trip['date'].toDate())}",
-                style: const TextStyle(color: Colors.white)),
-            Text("Pick Up Location: ${trip["from"]}",
-                style: const TextStyle(color: Colors.white)),
-            Text("Drop Off Location: ${trip["to"]}",
-                style: const TextStyle(color: Colors.white)),
-            const SizedBox(height: 10),
-            Text("Passenger Name: ${trip["name"]}",
-                style: const TextStyle(color: Colors.white)),
-
-            // Additional details as needed
             Row(
-              mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                ElevatedButton(
-                  onPressed: () async {
-                    showDialog(
-                      context: context,
-                      builder: (context) {
-                        return Dialog(
-                          backgroundColor: Colors.red,
-                          child: SizedBox(
-                            width: 300,
-                            height: 300,
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                const Text('Reject this service?',
-                                    style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold)),
-                                const Padding(
-                                  padding: EdgeInsets.only(
-                                      left: 10, right: 10, bottom: 10),
-                                  child: Text(
-                                      'Before canceling the ride you should call the passenger to he/she cancel the ride',
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.normal)),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.only(
-                                      left: 20, right: 20, bottom: 10),
-                                  child: Container(
-                                    width: double.infinity,
-                                    height: 50,
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(15),
-                                      color: Colors.white30,
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      children: [
-                                        const Icon(
-                                          Icons.account_circle,
-                                          color: Colors.white,
-                                          size: 32,
-                                        ),
-                                        const SizedBox(
-                                          width: 10,
-                                        ),
-                                        Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: [
-                                            Text(trip['name'],
-                                                style: const TextStyle(
-                                                    color: Colors.white,
-                                                    fontSize: 13,
-                                                    fontWeight:
-                                                        FontWeight.bold)),
-                                            Text(trip['mynum'],
-                                                style: const TextStyle(
-                                                    color: Colors.white,
-                                                    fontSize: 11,
-                                                    fontWeight:
-                                                        FontWeight.normal)),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(
-                                  height: 20,
-                                ),
-                                ElevatedButton(
-                                  onPressed: () async {
-                                    var text = 'tel:${trip["mynum"]}';
-                                    if (await canLaunch(text)) {
-                                      await launch(text);
-                                    }
-
-                                    Navigator.pop(context);
-                                    await FirebaseFirestore.instance
-                                        .collection('Advance Bookings')
-                                        .doc(trip.id)
-                                        .update({
-                                      'status': 'Rejected',
-                                      'drivername': name,
-                                      'driverid': id,
-                                      'driverbodynumber': bodynumber,
-                                    });
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.white),
-                                  child: const Text('Reject'),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                  child: const Text('Reject'),
+                const Icon(
+                  Icons.account_circle,
+                  size: 35,
                 ),
                 const SizedBox(
-                  width: 20,
+                  width: 10,
                 ),
-                ElevatedButton(
-                  onPressed: () async {
-                    await FirebaseFirestore.instance
-                        .collection('Advance Bookings')
-                        .doc(trip.id)
-                        .update({
-                      'status': 'Accepted',
-                      'drivername': name,
-                      'driverid': id,
-                      'driverbodynumber': bodynumber,
-                    });
-                  },
-                  style:
-                      ElevatedButton.styleFrom(backgroundColor: Colors.white),
-                  child: const Text('Accept'),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(trip['name'],
+                        style:
+                            const TextStyle(color: Colors.black, fontSize: 16)),
+                    Text(trip['mynum'],
+                        style:
+                            const TextStyle(color: Colors.black, fontSize: 12)),
+                  ],
                 ),
               ],
             ),
+            const SizedBox(
+              height: 20,
+            ),
+            const Text("1 Day Service",
+                style: TextStyle(color: Colors.black, fontSize: 14)),
+            const SizedBox(
+              height: 10,
+            ),
+            Text(DateFormat.yMMMd().add_jm().format(trip['date'].toDate()),
+                style: const TextStyle(color: Colors.black, fontSize: 12)),
+            const Divider(),
+            Text(trip['to'],
+                style: const TextStyle(color: Colors.black, fontSize: 12)),
           ],
         ),
       ),
