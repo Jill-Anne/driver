@@ -50,7 +50,7 @@ class _NewAdvanceBookingState extends State<NewAdvanceBooking> {
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('Advance Bookings')
-            .where('status', isEqualTo: 'Pending')
+            .where('status', isEqualTo: 'Accepted')
             .snapshots(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.hasError) {

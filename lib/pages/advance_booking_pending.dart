@@ -81,51 +81,163 @@ class _AdvanceBookingState extends State<AdvanceBooking> {
   }
 
   Widget _buildTripCard(trip) {
-    return Card(
-      color: Colors.grey[200],
-      elevation: 10,
-      margin: const EdgeInsets.all(10),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(
-                  Icons.account_circle,
-                  size: 35,
-                ),
-                const SizedBox(
-                  width: 10,
-                ),
-                Column(
+    return GestureDetector(
+      onTap: () {
+        showDialog(
+          context: context,
+          builder: (context) {
+            return Dialog(
+              backgroundColor: const Color(0xFF2E3192),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(trip['name'],
-                        style:
-                            const TextStyle(color: Colors.black, fontSize: 16)),
-                    Text(trip['mynum'],
-                        style:
-                            const TextStyle(color: Colors.black, fontSize: 12)),
+                    const Center(
+                      child: Text('Would you accept this Service?',
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              fontSize: 18)),
+                    ),
+                    const Center(
+                      child: Text(
+                          'After accepting, you will see full passenger details',
+                          style: TextStyle(
+                              fontWeight: FontWeight.normal,
+                              color: Colors.white,
+                              fontSize: 11)),
+                    ),
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        Container(
+                          width: 100,
+                          margin: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical:
+                                  10), // Adjusted margin for better spacing
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          child: ElevatedButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              backgroundColor: Colors
+                                  .grey, // Use the color from your reusable widget
+                            ),
+                            child: const Text(
+                              'Cancel', // Custom text for the booking action
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                        ),
+                        Container(
+                          width: 100,
+                          margin: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical:
+                                  10), // Adjusted margin for better spacing
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              await FirebaseFirestore.instance
+                                  .collection('Advance Bookings')
+                                  .doc(trip.id)
+                                  .update({
+                                'status': 'Accepted',
+                                'drivername': name,
+                                'driverid': id,
+                                'driverbodynumber': bodynumber,
+                              });
+                              Navigator.pop(context);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              backgroundColor: Colors
+                                  .green, // Use the color from your reusable widget
+                            ),
+                            child: const Text(
+                              'Accept', // Custom text for the booking action
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(
+                      height: 10,
+                    ),
                   ],
                 ),
-              ],
-            ),
-            const SizedBox(
-              height: 20,
-            ),
-            const Text("1 Day Service",
-                style: TextStyle(color: Colors.black, fontSize: 14)),
-            const SizedBox(
-              height: 10,
-            ),
-            Text(DateFormat.yMMMd().add_jm().format(trip['date'].toDate()),
-                style: const TextStyle(color: Colors.black, fontSize: 12)),
-            const Divider(),
-            Text(trip['to'],
-                style: const TextStyle(color: Colors.black, fontSize: 12)),
-          ],
+              ),
+            );
+          },
+        );
+      },
+      child: Card(
+        color: Colors.grey[200],
+        elevation: 10,
+        margin: const EdgeInsets.all(10),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(
+                    Icons.account_circle,
+                    size: 35,
+                  ),
+                  const SizedBox(
+                    width: 10,
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(trip['name'],
+                          style: const TextStyle(
+                              color: Colors.black, fontSize: 16)),
+                      Text(trip['mynum'],
+                          style: const TextStyle(
+                              color: Colors.black, fontSize: 12)),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(
+                height: 20,
+              ),
+              const Text("1 Day Service",
+                  style: TextStyle(color: Colors.black, fontSize: 14)),
+              const SizedBox(
+                height: 10,
+              ),
+              Text(DateFormat.yMMMd().add_jm().format(trip['date'].toDate()),
+                  style: const TextStyle(color: Colors.black, fontSize: 12)),
+              const Divider(),
+              Text(trip['to'],
+                  style: const TextStyle(color: Colors.black, fontSize: 12)),
+            ],
+          ),
         ),
       ),
     );
