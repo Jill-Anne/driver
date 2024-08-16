@@ -169,6 +169,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.6"
+  cupertino_will_pop_scope:
+    dependency: "direct main"
+    description:
+      name: cupertino_will_pop_scope
+      sha256: d312103538bee026428d785cc3c06093b34c2793249229b1ddc49a1d8a43901f
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.2.1"
   dbus:
     dependency: transitive
     description:
@@ -177,6 +185,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.7.10"
+  envied:
+    dependency: "direct main"
+    description:
+      name: envied
+      sha256: bbff9c76120e4dc5e2e36a46690cf0a26feb65e7765633f4e8d916bcd173a450
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.5.4+1"
   fake_async:
     dependency: transitive
     description:

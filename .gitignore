@@ -41,3 +41,9 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Ignore generated environment files
+env.g.dart
+
+# Ignore environment configuration files
+.env

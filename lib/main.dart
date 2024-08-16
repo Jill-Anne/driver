@@ -1,3 +1,4 @@
+import 'package:driver/env/env.dart';
 import 'package:driver/pages/dashboard.dart';
 import 'package:driver/pages/home_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -9,16 +10,16 @@ import 'package:permission_handler/permission_handler.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
-    options: const FirebaseOptions(
-        apiKey: "AIzaSyDtvRVetb6lZzxpIQQ8gqIGK1J2WOlBnok",
-        authDomain: "passenger-signuplogin.firebaseapp.com",
-        databaseURL:
-            "https://passenger-signuplogin-default-rtdb.asia-southeast1.firebasedatabase.app",
-        projectId: "passenger-signuplogin",
-        storageBucket: "passenger-signuplogin.appspot.com",
-        messagingSenderId: "755339267599",
-        appId: "1:755339267599:web:b6fae1da7711fc97e01d7a",
-        measurementId: "G-4H2JKHJB7F"),
+    options: FirebaseOptions(
+      apiKey: Env.apiKey,
+      authDomain: Env.authDomain,
+      databaseURL: Env.databaseURL,
+      projectId: Env.projectId,
+      storageBucket: Env.storageBucket,
+      messagingSenderId: Env.messagingSenderId,
+      appId: Env.appId,
+      measurementId: Env.measurementId,
+    ),
   );
     
   await Permission.notification.isDenied.then((valueOfPermission)
