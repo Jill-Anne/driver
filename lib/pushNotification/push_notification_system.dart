@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:assets_audio_player/assets_audio_player.dart';
 import 'package:driver/global/global_var.dart';
 import 'package:driver/models/trip_details.dart';
@@ -12,58 +13,62 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
 
 class PushNotificationSystem {
-  FirebaseMessaging firebaseCloudMessaging = FirebaseMessaging.instance;
+  final FirebaseMessaging firebaseCloudMessaging = FirebaseMessaging.instance;
+  final AssetsAudioPlayer audioPlayer = AssetsAudioPlayer();
 
-  Future<String?> generateDeviceRegistrationToken() async {
-    String? deviceRecognitionToken = await firebaseCloudMessaging.getToken();
+  Future<void> generateDeviceRegistrationToken() async {
+    try {
+      String? deviceToken = await firebaseCloudMessaging.getToken();
+      print('Generated device token: $deviceToken');
+      if (deviceToken != null) {
+        DatabaseReference referenceOnlineDriver = FirebaseDatabase.instance
+            .ref()
+            .child("driversAccount")
+            .child(FirebaseAuth.instance.currentUser!.uid)
+            .child("deviceToken");
+        
+        await referenceOnlineDriver.set(deviceToken);
+        print('Device token saved to database');
 
-    DatabaseReference referenceOnlineDriver = FirebaseDatabase.instance
-        .ref()
-        .child("driversAccount")
-        .child(FirebaseAuth.instance.currentUser!.uid)
-        .child("deviceToken");
-
-    referenceOnlineDriver.set(deviceRecognitionToken);
-
-    firebaseCloudMessaging.subscribeToTopic("drivers");
-    firebaseCloudMessaging.subscribeToTopic("users");
+        await firebaseCloudMessaging.subscribeToTopic("drivers");
+        await firebaseCloudMessaging.subscribeToTopic("users");
+        print('Subscribed to topics: drivers, users');
+      } else {
+        print('Failed to generate device token');
+      }
+    } catch (e) {
+      print('Error generating device token: $e');
+    }
   }
 
-  startListeningForNewNotification(BuildContext context) async {
-    ///1. Terminated
-    //When the app is completely closed and it receives a push notification
-    FirebaseMessaging.instance
-        .getInitialMessage()
-        .then((RemoteMessage? messageRemote) {
+  void startListeningForNewNotification(BuildContext context) async {
+    // Terminated
+    FirebaseMessaging.instance.getInitialMessage().then((RemoteMessage? messageRemote) {
       if (messageRemote != null) {
+        print('Terminated state notification received: ${messageRemote.data}');
         String tripID = messageRemote.data["tripID"];
-
         retrieveTripRequestInfo(tripID, context);
+      } else {
+        print('No initial message received');
       }
     });
 
-    ///2. Foreground
-    //When the app is open and it receives a push notification
-    FirebaseMessaging.onMessage.listen((RemoteMessage? messageRemote) {
-      if (messageRemote != null) {
-        String tripID = messageRemote.data["tripID"];
-
-        retrieveTripRequestInfo(tripID, context);
-      }
+    // Foreground
+    FirebaseMessaging.onMessage.listen((RemoteMessage messageRemote) {
+      print('Foreground state notification received: ${messageRemote.data}');
+      String tripID = messageRemote.data["tripID"];
+      retrieveTripRequestInfo(tripID, context);
     });
 
-    ///3. Background
-    //When the app is in the background and it receives a push notification
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage? messageRemote) {
-      if (messageRemote != null) {
-        String tripID = messageRemote.data["tripID"];
-
-        retrieveTripRequestInfo(tripID, context);
-      }
+    // Background
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage messageRemote) {
+      print('Background state notification received: ${messageRemote.data}');
+      String tripID = messageRemote.data["tripID"];
+      retrieveTripRequestInfo(tripID, context);
     });
   }
 
-  retrieveTripRequestInfo(String tripID, BuildContext context) {
+  Future<void> retrieveTripRequestInfo(String tripID, BuildContext context) async {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -72,14 +77,17 @@ class PushNotificationSystem {
 
     DatabaseReference tripRequestsRef = FirebaseDatabase.instance.ref().child("tripRequests").child(tripID);
 
-    tripRequestsRef.once().then((dataSnapshot) {
+    try {
+      DataSnapshot dataSnapshot = await tripRequestsRef.get();
+      print('Trip request data retrieved: ${dataSnapshot.value}');
+      
       Navigator.pop(context);
-
+      
       audioPlayer.open(Audio("assets/audio/alert_sound.mp3"));
       audioPlayer.play();
 
-      if (dataSnapshot.snapshot.value != null) {
-        final tripMap = Map<String, dynamic>.from(dataSnapshot.snapshot.value as Map);
+      if (dataSnapshot.exists) {
+        final tripMap = Map<String, dynamic>.from(dataSnapshot.value as Map);
 
         TripDetails tripDetailsInfo = TripDetails(
           tripID: tripID,
@@ -107,6 +115,9 @@ class PushNotificationSystem {
       } else {
         print("No data available for tripID $tripID");
       }
-    });
+    } catch (e) {
+      Navigator.pop(context);
+      print('Error retrieving trip request info: $e');
+    }
   }
 }

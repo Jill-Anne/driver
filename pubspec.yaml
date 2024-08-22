@@ -58,6 +58,7 @@ dependencies:
   cached_network_image: ^3.3.1
   cupertino_will_pop_scope: ^1.2.1
   envied: ^0.5.4+1
+  googleapis_auth: ^1.6.0
 
 dev_dependencies:
   flutter_test:

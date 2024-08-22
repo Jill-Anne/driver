@@ -1,9 +1,11 @@
 import 'dart:convert';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:driver/global/global_var.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_geofire/flutter_geofire.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -97,19 +99,96 @@ class CommonMethods {
   }
 
 
-  calculateFareAmount(DirectionDetails directionDetails)
-  {
-    double distancePerKmAmount = 0.4;
-    double durationPerMinuteAmount = 0.3;
-    double baseFareAmount = 2;
+  // calculateFareAmount(DirectionDetails directionDetails)
+  // {
+  //   double distancePerKmAmount = 0.4;
+  //   double durationPerMinuteAmount = 0.3;
+  //   double baseFareAmount = 2;
 
-    double totalDistanceTravelFareAmount = (directionDetails.distanceValueDigits! / 1000) * distancePerKmAmount;
-    double totalDurationSpendFareAmount = (directionDetails.durationValueDigits! / 60) * durationPerMinuteAmount;
+  //   double totalDistanceTravelFareAmount = (directionDetails.distanceValueDigits! / 1000) * distancePerKmAmount;
+  //   double totalDurationSpendFareAmount = (directionDetails.durationValueDigits! / 60) * durationPerMinuteAmount;
 
-    double overAllTotalFareAmount = baseFareAmount + totalDistanceTravelFareAmount + totalDurationSpendFareAmount;
+  //   double overAllTotalFareAmount = baseFareAmount + totalDistanceTravelFareAmount + totalDurationSpendFareAmount;
 
-    return overAllTotalFareAmount.toStringAsFixed(1);
+  //   return overAllTotalFareAmount.toStringAsFixed(1);
+  // }
+
+
+Future<double> calculateFareAmount(DirectionDetails directionDetails) async {
+  try {
+    // Retrieve the fare parameters from Firebase Firestore
+    DocumentSnapshot fareData = await FirebaseFirestore.instance
+        .collection('fareParameters')
+        .doc('currentParameters')
+        .get();
+
+    if (!fareData.exists) {
+      throw Exception('Fare parameters not found');
+    }
+
+    // Log retrieved fare data for debugging
+    print('Retrieved fare data: ${fareData.data()}');
+
+    // Ensure values are retrieved as double, handle possible type issues
+    double distancePerKmAmount;
+    double baseFareAmount;
+
+    try {
+      distancePerKmAmount = (fareData['distancePerKmAmount'] as num).toDouble();
+    } catch (e) {
+      print("Error converting distancePerKmAmount: $e");
+      distancePerKmAmount = 0.0;
+    }
+
+    try {
+      baseFareAmount = (fareData['baseFareAmount'] as num).toDouble();
+    } catch (e) {
+      print("Error converting baseFareAmount: $e");
+      baseFareAmount = 0.0;
+    }
+
+    // Distance in km
+    double distanceInKm;
+    try {
+      distanceInKm = directionDetails.distanceValueDigits! / 1000;
+    } catch (e) {
+      print("Error calculating distanceInKm: $e");
+      distanceInKm = 0.0;
+    }
+
+    // Determine if distance exceeds the base fare threshold
+    double distanceThreshold = 1.87; // Distance threshold for base fare
+
+    double totalDistanceTravelFareAmount;
+    if (distanceInKm > distanceThreshold) {
+      // Calculate the fare for the distance beyond the base threshold
+      double distanceBeyondThreshold = distanceInKm - distanceThreshold;
+      totalDistanceTravelFareAmount = distanceBeyondThreshold * distancePerKmAmount;
+    } else {
+      // No additional fare for distances within the base threshold
+      totalDistanceTravelFareAmount = 0;
+    }
+
+    // Calculate the overall total fare amount (base fare + distance-based fare)
+    double overAllTotalFareAmount = baseFareAmount + totalDistanceTravelFareAmount;
+
+    // Round the fare amount to the nearest whole number
+    overAllTotalFareAmount = overAllTotalFareAmount.roundToDouble();
+
+    // Save the calculated fare amount to Firestore
+    await FirebaseFirestore.instance
+        .collection('currentFare')
+        .doc('latestFare')
+        .set({'amount': overAllTotalFareAmount});
+
+    print('Calculated fare amount: PHP $overAllTotalFareAmount');
+    return overAllTotalFareAmount;
+  } catch (e) {
+    print("Error fetching fare parameters or calculating fare: $e");
+    return 0.0; // Return a default value or handle the error appropriately
   }
+}
+
 
   
 }

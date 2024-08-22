@@ -5,6 +5,7 @@ import 'package:driver/methods/common_methods.dart';
 import 'package:driver/models/trip_details.dart';
 import 'package:driver/pages/dashboard.dart'; // Import Dashboard page
 import 'package:driver/pages/new_trip_page.dart';
+import 'package:driver/pushNotification/cancel_passenfer.dart';
 import 'package:driver/widgets/loading_dialog.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -50,64 +51,65 @@ class _NotificationDialogState extends State<NotificationDialog> {
     });
   }
 
-checkAvailabilityOfTripRequest(BuildContext context) async {
-  showDialog(
-    barrierDismissible: false,
-    context: context,
-    builder: (BuildContext context) => LoadingDialog(
-      messageText: 'please wait...',
-    ),
-  );
+  checkAvailabilityOfTripRequest(BuildContext context) async {
+    showDialog(
+      barrierDismissible: false,
+      context: context,
+      builder: (BuildContext context) => LoadingDialog(
+        messageText: 'please wait...',
+      ),
+    );
 
-  DatabaseReference driverTripStatusRef = FirebaseDatabase.instance
-      .ref()
-      .child("driversAccount")
-      .child(FirebaseAuth.instance.currentUser!.uid)
-      .child("newTripStatus");
+    DatabaseReference driverTripStatusRef = FirebaseDatabase.instance
+        .ref()
+        .child("driversAccount")
+        .child(FirebaseAuth.instance.currentUser!.uid)
+        .child("newTripStatus");
 
-  String? newTripStatusValue; // Initialize as null
+    String? newTripStatusValue; // Initialize as null
 
-  await driverTripStatusRef.once().then((snap) {
-    Navigator.pop(context); // Close the loading dialog
+    await driverTripStatusRef.once().then((snap) {
+      Navigator.pop(context); // Close the loading dialog
 
-    if (snap != null &&
-        snap.snapshot != null &&
-        snap.snapshot.value != null) {
-      newTripStatusValue = snap.snapshot.value.toString();
-    } else {
-      cMethods.displaySnackBar("Trip Request Not Found.", context);
-      return;
-    }
+      if (snap != null &&
+          snap.snapshot != null &&
+          snap.snapshot.value != null) {
+        newTripStatusValue = snap.snapshot.value.toString();
+      } else {
+        cMethods.displaySnackBar("Trip Request Not Found.", context);
+        return;
+      }
 
-    if (newTripStatusValue == widget.tripDetailsInfo!.tripID) {
-      driverTripStatusRef.set("accepted");
+      if (newTripStatusValue == widget.tripDetailsInfo!.tripID) {
+        driverTripStatusRef.set("accepted");
 
-      // Disable homepage location updates
-      cMethods.turnOffLocationUpdatesForHomePage();
+        // Disable homepage location updates
+        cMethods.turnOffLocationUpdatesForHomePage();
 
-      // Navigate to NewTripPage
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => NewTripPage(newTripDetailsInfo: widget.tripDetailsInfo),
-        ),
-      ).then((_) {
-        // After returning from NewTripPage, navigate to Dashboard
+        // Navigate to NewTripPage
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const Dashboard()),
-        );
-      });
-    } else if (newTripStatusValue == "cancelled") {
-      cMethods.displaySnackBar("Trip Request has been Cancelled by user.", context);
-    } else if (newTripStatusValue == "timeout") {
-      cMethods.displaySnackBar("Trip Request timed out.", context);
-    } else {
-      cMethods.displaySnackBar("Trip Request removed. Not Found.", context);
-    }
-  });
-}
-
+          MaterialPageRoute(
+            builder: (context) =>
+                NewTripPage(newTripDetailsInfo: widget.tripDetailsInfo),
+          ),
+        ).then((_) {
+          // After returning from NewTripPage, navigate to Dashboard
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const Dashboard()),
+          );
+        });
+      } else if (newTripStatusValue == "cancelled") {
+        cMethods.displaySnackBar(
+            "Trip Request has been Cancelled by user.", context);
+      } else if (newTripStatusValue == "timeout") {
+        cMethods.displaySnackBar("Trip Request timed out.", context);
+      } else {
+        cMethods.displaySnackBar("Trip Request removed. Not Found.", context);
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -158,14 +160,16 @@ checkAvailabilityOfTripRequest(BuildContext context) async {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Image.asset("assets/images/initial.png", height: 16, width: 16),
+                        Image.asset("assets/images/initial.png",
+                            height: 16, width: 16),
                         const SizedBox(width: 18),
                         Expanded(
                           child: Text(
                             widget.tripDetailsInfo!.pickupAddress.toString(),
                             overflow: TextOverflow.ellipsis,
                             maxLines: 2,
-                            style: const TextStyle(color: Colors.grey, fontSize: 18),
+                            style: const TextStyle(
+                                color: Colors.grey, fontSize: 18),
                           ),
                         ),
                       ],
@@ -174,14 +178,16 @@ checkAvailabilityOfTripRequest(BuildContext context) async {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Image.asset("assets/images/final.png", height: 16, width: 16),
+                        Image.asset("assets/images/final.png",
+                            height: 16, width: 16),
                         const SizedBox(width: 18),
                         Expanded(
                           child: Text(
                             widget.tripDetailsInfo!.dropOffAddress.toString(),
                             overflow: TextOverflow.ellipsis,
                             maxLines: 2,
-                            style: const TextStyle(color: Colors.grey, fontSize: 18),
+                            style: const TextStyle(
+                                color: Colors.grey, fontSize: 18),
                           ),
                         ),
                       ],
@@ -199,9 +205,49 @@ checkAvailabilityOfTripRequest(BuildContext context) async {
                   children: [
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.of(context).pop(); // Dismiss the dialog
-                          audioPlayer.stop(); // Stop audio
+                        onPressed: () async {
+                          try {
+                            String driverUID = FirebaseAuth.instance.currentUser!.uid;
+                            DatabaseReference driverRef = FirebaseDatabase.instance.ref().child("driversAccount").child(driverUID);
+
+                            // Retrieve the trip ID
+                            DataSnapshot snapshot = await driverRef.child("newTripStatus").get();
+                            if (snapshot.exists) {
+                              String tripID = snapshot.value.toString();
+                              print("Trip ID retrieved: $tripID");
+
+                              // Update the driver trip status
+                              await driverRef.child("driverTripStatusFromDRIVER").set("cancelled");
+                              print("Driver trip status updated to 'cancelled'");
+
+                              // Update the trip request status
+                              DatabaseReference tripRequestUpdateRef = FirebaseDatabase.instance.ref().child("tripRequests").child(tripID).child("status");
+                              await tripRequestUpdateRef.set("cancelled");
+                              print("Trip request status updated to 'cancelled'");
+
+                              // Fetch the passenger's device token and send a notification
+                              DatabaseReference passengerRef = FirebaseDatabase.instance.ref().child("tripRequests").child(tripID).child("deviceToken");
+                              DataSnapshot tokenSnapshot = await passengerRef.get();
+                              if (tokenSnapshot.exists) {
+                                String passengerDeviceToken = tokenSnapshot.value.toString();
+                                print("Passenger device token retrieved: $passengerDeviceToken");
+
+                                // Send notification to passenger
+                                PushNotificationService.sendNotificationToPassenger(
+                                    passengerDeviceToken, tripID, "cancelled", "Trip Cancelled");
+                              } else {
+                                print("No device token found for tripID: $tripID");
+                              }
+                            } else {
+                              print("No newTripStatus found for driver UID: $driverUID");
+                            }
+                          } catch (e) {
+                            print("Failed to handle decline action: $e");
+                            // Show a Snackbar or Dialog to inform the user about the failure
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Failed to decline trip: $e')),
+                            );
+                          }
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.pink,
@@ -220,7 +266,7 @@ checkAvailabilityOfTripRequest(BuildContext context) async {
                           setState(() {
                             tripRequestStatus = "accepted";
                           });
-                          checkAvailabilityOfTripRequest(context); // Check trip request status
+                          checkAvailabilityOfTripRequest(context);
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green,
