@@ -47,3 +47,6 @@ env.g.dart
 
 # Ignore environment configuration files
 .env
+
+# .gitignore
+lib/methods/firebaseToken.dart
