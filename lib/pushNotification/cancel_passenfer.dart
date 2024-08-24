@@ -1,5 +1,6 @@
 import 'dart:convert';
-import 'package:driver/pushNotification/firebaseToken.dart';
+
+import 'package:driver/methods/firebaseToken.dart';
 import 'package:http/http.dart' as http;
 
 class PushNotificationService {

@@ -247,7 +247,9 @@ class _NotificationDialogState extends State<NotificationDialog> {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(content: Text('Failed to decline trip: $e')),
                             );
-                          }
+                          }finally {
+      Navigator.of(context).pop(); // Ensure dialog is dismissed
+    }
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.pink,
