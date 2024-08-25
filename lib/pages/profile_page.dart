@@ -9,7 +9,7 @@ import 'dart:io';
 import 'package:permission_handler/permission_handler.dart';
 
 Future<Map<String, dynamic>> retrieveUserData() async {
-  final DatabaseReference database = FirebaseDatabase.instance.reference();
+  final DatabaseReference database = FirebaseDatabase.instance.ref();
   final FirebaseAuth auth = FirebaseAuth.instance;
   User? user = auth.currentUser;
   if (user != null) {
@@ -25,6 +25,10 @@ Future<Map<String, dynamic>> retrieveUserData() async {
     if (userKey.isNotEmpty) {
       final userData = Map<String, dynamic>.from(data[userKey]);
       userData['key'] = userKey;
+      // Fetch currentTripID, deviceToken, and driverPhoto
+      final currentTripID = userData['currentTripID'];
+      final driverPhoto = userData['driverPhoto'] ?? '';
+      userData['driverPhoto'] = driverPhoto;
       print('Retrieved user data: $userData');
       return userData;
     }
@@ -148,7 +152,8 @@ class _ProfilePageState extends State<ProfilePage> {
 
       await _database
           .child('driversAccount')
-          .child(userKey)
+       //   .child(userKey)
+          .child(user.uid)
           .update({'driverPhoto': photoUrl});
 
       setState(() {

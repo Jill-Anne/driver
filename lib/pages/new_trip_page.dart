@@ -298,7 +298,7 @@ class _NewTripPageState extends State<NewTripPage>
     displayPaymentDialog(fareAmount);
 
     //save fare amount to driver total earnings
-    saveFareAmountToDriverTotalEarnings(fareAmount);
+    //saveFareAmountToDriverTotalEarnings(fareAmount);
   }
 
   displayPaymentDialog(fareAmount)
@@ -310,30 +310,30 @@ class _NewTripPageState extends State<NewTripPage>
     );
   }
 
-  saveFareAmountToDriverTotalEarnings(String fareAmount) async
-  {
-    DatabaseReference driverEarningsRef = FirebaseDatabase.instance.ref()
-        .child("driversAccount")
-        .child(FirebaseAuth.instance.currentUser!.uid)
-        .child("earnings");
+  // saveFareAmountToDriverTotalEarnings(String fareAmount) async
+  // {
+  //   DatabaseReference driverEarningsRef = FirebaseDatabase.instance.ref()
+  //       .child("driversAccount")
+  //       .child(FirebaseAuth.instance.currentUser!.uid)
+  //       .child("earnings");
 
-    await driverEarningsRef.once().then((snap)
-    {
-      if(snap.snapshot.value != null)
-      {
-        double previousTotalEarnings = double.parse(snap.snapshot.value.toString());
-        double fareAmountForTrip = double.parse(fareAmount);
+  //   await driverEarningsRef.once().then((snap)
+  //   {
+  //     if(snap.snapshot.value != null)
+  //     {
+  //       double previousTotalEarnings = double.parse(snap.snapshot.value.toString());
+  //       double fareAmountForTrip = double.parse(fareAmount);
 
-        double newTotalEarnings = previousTotalEarnings + fareAmountForTrip;
+  //       double newTotalEarnings = previousTotalEarnings + fareAmountForTrip;
 
-        driverEarningsRef.set(newTotalEarnings);
-      }
-      else
-      {
-        driverEarningsRef.set(fareAmount);
-      }
-    });
-  }
+  //       driverEarningsRef.set(newTotalEarnings);
+  //     }
+  //     else
+  //     {
+  //       driverEarningsRef.set(fareAmount);
+  //     }
+  //   });
+  // }
 
 Future<void> saveDriverDataToTripInfo() async {
   // Retrieve user data
