@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart'; // Import intl package for date formatting
 
 class TripsHistoryPage extends StatefulWidget {
   const TripsHistoryPage({super.key});
@@ -77,9 +78,32 @@ class _TripsHistoryPageState extends State<TripsHistoryPage> {
             itemBuilder: ((context, index) {
               print("Rendering trip at index $index: ${tripsList[index]}");
 
+              // Check if the trip status is "ended" and matches the current driver's UID
               if (tripsList[index]["status"] != null &&
                   tripsList[index]["status"] == "ended" &&
                   tripsList[index]["driverID"] == FirebaseAuth.instance.currentUser!.uid) {
+                
+                // Initialize a default formatted date
+                String tripEndedTimeFormatted = "N/A";
+                
+                // Try parsing the trip ended time
+                if (tripsList[index]["tripEndedTime"] != null) {
+                  try {
+                    // Define the expected date format
+                    DateFormat dateFormat = DateFormat("MMMM d, yyyy h:mm a");
+                    
+                    // Parse the date string into a DateTime object
+                    DateTime tripEndedDateTime = dateFormat.parse(tripsList[index]["tripEndedTime"]);
+                    
+                    // Format the DateTime object to a readable string
+                    tripEndedTimeFormatted = DateFormat('MMMM d, yyyy h:mm a').format(tripEndedDateTime);
+                  } catch (e) {
+                    // Handle parsing exceptions
+                    tripEndedTimeFormatted = "Invalid date format";
+                    print("Date parsing error: $e");
+                  }
+                }
+
                 return Card(
                   color: Colors.white12,
                   elevation: 10,
@@ -88,7 +112,7 @@ class _TripsHistoryPageState extends State<TripsHistoryPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Driver Name
+                        // Display Driver Name
                         Text(
                           'Driver Name: ${tripsList[index]["firstName"] ?? "N/A"} ${tripsList[index]["lastName"] ?? "N/A"}',
                           style: const TextStyle(
@@ -98,7 +122,7 @@ class _TripsHistoryPageState extends State<TripsHistoryPage> {
                         ),
                         const SizedBox(height: 8),
 
-                        // ID Number
+                        // Display ID Number
                         Text(
                           'ID Number: ${tripsList[index]["idNumber"] ?? "N/A"}',
                           style: const TextStyle(
@@ -108,7 +132,7 @@ class _TripsHistoryPageState extends State<TripsHistoryPage> {
                         ),
                         const SizedBox(height: 8),
 
-                        // Pickup - fare amount
+                        // Display Pickup Address and Fare Amount
                         Row(
                           children: [
                             Image.asset('assets/images/initial.png', height: 16, width: 16),
@@ -136,7 +160,7 @@ class _TripsHistoryPageState extends State<TripsHistoryPage> {
 
                         const SizedBox(height: 8),
 
-                        // Dropoff
+                        // Display Dropoff Address
                         Row(
                           children: [
                             Image.asset('assets/images/final.png', height: 16, width: 16),
@@ -152,6 +176,17 @@ class _TripsHistoryPageState extends State<TripsHistoryPage> {
                               ),
                             ),
                           ],
+                        ),
+
+                        const SizedBox(height: 8),
+
+                        // Display Trip Ended Time
+                        Text(
+                          'Trip Ended: $tripEndedTimeFormatted',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.white,
+                          ),
                         ),
 
                         // Delete Button

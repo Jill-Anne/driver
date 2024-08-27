@@ -8,7 +8,7 @@ class PaymentDialog extends StatelessWidget {
   final DirectionDetails? directionDetails;
   CommonMethods cMethods = CommonMethods();
 
-  PaymentDialog({Key? key, this.directionDetails, required String fareAmount})
+  PaymentDialog({Key? key, this.directionDetails, required String fareAmount, required String tripID, required String amount})
       : super(key: key);
 
   Future<double> getFareAmount() async {

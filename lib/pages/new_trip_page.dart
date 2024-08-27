@@ -306,7 +306,7 @@ class _NewTripPageState extends State<NewTripPage>
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (BuildContext context) => PaymentDialog(fareAmount: fareAmount),
+      builder: (BuildContext context) => PaymentDialog(fareAmount: fareAmount, tripID: '', amount: '',),
     );
   }
 
@@ -390,15 +390,52 @@ Future<void> saveDriverDataToTripInfo() async {
   }
 }
 
+void setupFirebaseListeners() {
+  FirebaseDatabase.instance.ref()
+    .child("tripRequests")
+    .child(widget.newTripDetailsInfo!.tripID!)
+    .onValue.listen((event) {
+      final data = event.snapshot.value as Map<dynamic, dynamic>?;
 
-  @override
-  void initState() {
-    // TODO: implement initState
-    saveDriverDataToTripInfo();
-    super.initState();
+      if (data != null) {
+        // Check for trip status updates
+        final status = data['status'] as String?;
+        if (status == 'cancelled') {
+          showCancellationDialog();
+        } else if (status == 'ended') {
+          // Handle trip ended logic here
+          // e.g., show final summary, navigate to another page, etc.
+        }
+      }
+    });
+}
 
-    //saveDriverDataToTripInfo();
-  }
+void showCancellationDialog() {
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (BuildContext context) => AlertDialog(
+      title: Text('Trip Cancelled'),
+      content: Text('The trip has been cancelled by the driver.'),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text('OK'),
+        ),
+      ],
+    ),
+  );
+}
+
+
+
+@override
+void initState() {
+  super.initState();
+  saveDriverDataToTripInfo();
+  setupFirebaseListeners(); // Add this line to set up Firebase listeners
+}
+
 
   @override
   Widget build(BuildContext context)
