@@ -56,37 +56,62 @@ class _TripsPageState extends State<TripsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
         body: SingleChildScrollView(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          //Total Trips
-          Center(
+            child: Column(
+      mainAxisAlignment:
+          MainAxisAlignment.center, // Centers vertically within the Column
+      children: [
+        // Total Trips
+        Center(
+          child: Padding(
+            padding: const EdgeInsets.only(
+                top: 180.0), // Adds space above the entire content
             child: Container(
-              color: Colors.indigo,
-              width: 300,
+              width: 300, // Set your desired width here
+              height: 100, // Set your desired height here
+              decoration: BoxDecoration(
+                color: Color(0x662E3192), // Box background color
+                borderRadius: BorderRadius.circular(15), // Rounded corners
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.3),
+                    blurRadius: 5,
+                    offset: Offset(2, 2), // Shadow position
+                  ),
+                ],
+              ),
               child: Padding(
-                padding: const EdgeInsets.all(18.0),
-                child: Column(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 10.0), // Adds horizontal padding for the text
+                child: Row(
+                  // Changed to Row to arrange texts horizontally
+
+                  mainAxisAlignment: MainAxisAlignment
+                      .start, // Centers content horizontally in the box
+                  crossAxisAlignment: CrossAxisAlignment
+                      .center, // Aligns text vertically centered
                   children: [
-                    Image.asset(
-                      "assets/images/totaltrips.png",
-                      width: 120,
-                    ),
-                    const SizedBox(
-                      height: 10,
-                    ),
-                    const Text(
-                      "Total Trips:",
-                      style: TextStyle(
-                        color: Colors.white,
+                    const Padding(
+                      padding: EdgeInsets.only(left: 20.0),
+                      child: Text(
+                        "Total Trips:",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                        ),
                       ),
                     ),
-                    Text(
-                      currentDriverTotalTripsCompleted,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
+                    const SizedBox(width: 10), // Spacing between the two texts
+                    Padding(
+                      padding: const EdgeInsets.only(
+                          left:
+                              10.0), // Padding to the left of the dynamic text
+                      child: Text(
+                        currentDriverTotalTripsCompleted, // Dynamic content
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ],
@@ -94,85 +119,126 @@ class _TripsPageState extends State<TripsPage> {
               ),
             ),
           ),
+        ),
+        const SizedBox(
+          height: 20, // Adds space below the entire container
+        ),
 
-          const SizedBox(
-            height: 20,
-          ),
-
-          //check trip history
-          GestureDetector(
-            onTap: () {
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (c) => const TripsHistoryPage()));
-            },
-            child: Center(
+        GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (c) => const TripsHistoryPage()),
+            );
+          },
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.only(
+                  top: 10.0), // Adds space above the entire content
               child: Container(
-                color: Colors.indigo,
-                width: 300,
-                child: Padding(
-                  padding: const EdgeInsets.all(18.0),
-                  child: Column(
+                width: 300, // Set your desired width here
+                height: 100, // Set your desired height here
+                decoration: BoxDecoration(
+                  color: Color(0x662E3192), // Box background color
+                  borderRadius: BorderRadius.circular(15), // Rounded corners
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.3),
+                      blurRadius: 5,
+                      offset: Offset(2, 2), // Shadow position
+                    ),
+                  ],
+                ),
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(
+                      horizontal: 10.0), // Adds horizontal padding for the text
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment
+                        .start, // Aligns the texts to the start (left) of the row
+                    crossAxisAlignment: CrossAxisAlignment
+                        .center, // Aligns text vertically centered
                     children: [
-                      Image.asset(
-                        "assets/images/tripscompleted.png",
-                        width: 150,
-                      ),
-                      const SizedBox(
-                        height: 10,
-                      ),
-                      const Text(
-                        "Check Trips History",
-                        style: TextStyle(
-                          color: Colors.white,
+                      Padding(
+                        padding: EdgeInsets.only(
+                            left:
+                                20.0), // Padding to the left of the "Total Trips:" text
+                        child: Text(
+                          "Check Trip History",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                          ),
                         ),
                       ),
+                      SizedBox(
+                          width: 10), // Spacing between the two texts
                     ],
                   ),
                 ),
               ),
             ),
           ),
+        ),
 
-          const SizedBox(
-            height: 20,
-          ),
+        const SizedBox(
+          height: 20,
+        ),
 
-          //check trip history
-          GestureDetector(
-            onTap: () {
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (c) => const NewAdvanceBooking()));
-            },
-            child: Center(
+        //check trip history
+        GestureDetector(
+          onTap: () {
+            Navigator.push(context,
+                MaterialPageRoute(builder: (c) => const NewAdvanceBooking()));
+          },
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.only(
+                  top: 10.0), // Adds space above the entire content
               child: Container(
-                color: Colors.indigo,
-                width: 300,
-                child: Padding(
-                  padding: const EdgeInsets.all(18.0),
-                  child: Column(
+                width: 300, // Set your desired width here
+                height: 100, // Set your desired height here
+                decoration: BoxDecoration(
+                  color: Color(0x662E3192), // Box background color
+                  borderRadius: BorderRadius.circular(15), // Rounded corners
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.3),
+                      blurRadius: 5,
+                      offset: Offset(2, 2), // Shadow position
+                    ),
+                  ],
+                ),
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(
+                      horizontal: 10.0), // Adds horizontal padding for the text
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment
+                        .start, // Aligns the texts to the start (left) of the row
+                    crossAxisAlignment: CrossAxisAlignment
+                        .center, // Aligns text vertically centered
                     children: [
-                      Image.asset(
-                        "assets/images/tripscompleted.png",
-                        width: 150,
-                        height: 100,
-                      ),
-                      const SizedBox(
-                        height: 10,
-                      ),
-                      const Text(
-                        "Pending Advance Booking",
-                        style: TextStyle(
-                          color: Colors.white,
+                      Padding(
+                        padding: EdgeInsets.only(
+                            left:
+                                20.0), // Padding to the left of the "Total Trips:" text
+                        child: Text(
+                          "Pending Advance Booking",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                          ),
                         ),
                       ),
+                      SizedBox(
+                          width: 10), // Spacing between the two texts
                     ],
                   ),
                 ),
               ),
             ),
           ),
-        ],
-      ),
-    ));
+        ),
+      ],
+    )));
   }
 }

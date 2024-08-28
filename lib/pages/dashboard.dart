@@ -77,17 +77,52 @@ class _DashboardState extends State<Dashboard>
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
+        items: [
           BottomNavigationBarItem(
-              icon: Icon(Icons.timelapse_rounded), label: "Advance Bookings"),
+            icon: Image.asset(
+              indexSelected == 0
+                  ? "assets/images/Home_selected.png" // Grey image for selected
+                  : "assets/images/Home.png", // Color image for unselected
+              height: 24,
+              width: 24,
+            ),
+            label: "Home",
+          ),
           BottomNavigationBarItem(
-              icon: Icon(Icons.account_tree), label: "Trips"),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
+            icon: Image.asset(
+              indexSelected == 1
+                  ? "assets/images/AdvanceBooking_selected.png" // Grey image for selected
+                  : "assets/images/AdvanceBooking.png", // Color image for unselected
+              height: 24,
+              width: 24,
+            ),
+            label: "Advance Bookings",
+          ),
+          BottomNavigationBarItem(
+            icon: Image.asset(
+              indexSelected == 2
+                  ? "assets/images/TripHistory_selected.png" // Grey image for selected
+                  : "assets/images/TripHistory.png", // Color image for unselected
+              height: 24,
+              width: 24,
+            ),
+            label: "Trips",
+          ),
+          BottomNavigationBarItem(
+            icon: Image.asset(
+              indexSelected == 3
+                  ? "assets/images/Profile_selected.png" // Grey image for selected
+                  : "assets/images/Profile.png", // Color image for unselected
+              height: 24,
+              width: 24,
+            ),
+            label: "Profile",
+          ),
         ],
         currentIndex: indexSelected,
         unselectedItemColor: Colors.grey,
-        selectedItemColor: Colors.pink,
+        selectedItemColor:Color(0x662E3192),
+         backgroundColor: Color(0xFFF2F8FC),
         showSelectedLabels: true,
         selectedLabelStyle: const TextStyle(fontSize: 12),
         type: BottomNavigationBarType.fixed,
