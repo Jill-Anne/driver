@@ -45,7 +45,7 @@ class _NewAdvanceBookingState extends State<NewAdvanceBooking> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Advance Booking'),
+        title: const Text('Pending Advance Booking'),
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
