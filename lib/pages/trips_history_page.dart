@@ -266,7 +266,7 @@ Padding(
       Text(
         "₱ ${tripsList[index]["fareAmount"] ?? "0.00"}",
         style: const TextStyle(
-          fontSize: 20, // Font size
+          fontSize: 25, // Font size
           fontWeight: FontWeight.bold,
           color: Colors.black87,
         ),
@@ -297,11 +297,22 @@ Padding(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   // Add vertical space to move the image down
-                  const SizedBox(height: 105), // Adjust this value to control the image position
+                  const SizedBox(height: 40), // Adjust this value to control the image position
 
                   // Driver Photo
+                  Container(
+    width: 72, // Adjusted width
+    height: 72, // Adjusted height
+    decoration: BoxDecoration(
+     // shape: BoxShape.circle,
+      image: DecorationImage(
+        image: AssetImage('assets/images/toda.png'), // Replace with your image asset
+        fit: BoxFit.cover,
+      ),
+    ),
+  ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 8),
 
                   // Driver Name
                   Text(
