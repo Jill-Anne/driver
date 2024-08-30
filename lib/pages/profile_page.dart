@@ -51,7 +51,13 @@ class _ProfilePageState extends State<ProfilePage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final ImagePicker _picker = ImagePicker();
 
-  Map<String, TextEditingController> controllers = {};
+  TextEditingController _fullNameController = TextEditingController();
+  TextEditingController _birthdateController = TextEditingController();
+  TextEditingController _idNumberController = TextEditingController();
+  TextEditingController _bodyNumberController = TextEditingController();
+  TextEditingController _emailController = TextEditingController();
+  TextEditingController _phoneNumberController = TextEditingController();
+
   String userKey = '';
   File? _imageFile;
   String? _driverPhotoUrl;
@@ -60,23 +66,17 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void initState() {
     super.initState();
-    controllers = {
-      'firstName': TextEditingController(),
-      'lastName': TextEditingController(),
-      'birthdate': TextEditingController(),
-      'idNumber': TextEditingController(),
-      'bodyNumber': TextEditingController(),
-      'email': TextEditingController(),
-      'phoneNumber': TextEditingController(),
-    };
     _getUserData();
   }
 
   @override
   void dispose() {
-    controllers.forEach((key, controller) {
-      controller.dispose();
-    });
+    _fullNameController.dispose();
+    _birthdateController.dispose();
+    _idNumberController.dispose();
+    _bodyNumberController.dispose();
+    _emailController.dispose();
+    _phoneNumberController.dispose();
     super.dispose();
   }
 
@@ -85,27 +85,32 @@ class _ProfilePageState extends State<ProfilePage> {
     if (userData.isNotEmpty) {
       setState(() {
         userKey = userData['key'] ?? '';
-        controllers['firstName']?.text = userData['firstName'] ?? '';
-        controllers['lastName']?.text = userData['lastName'] ?? '';
-        controllers['birthdate']?.text = userData['birthdate'] ?? '';
-        controllers['idNumber']?.text = userData['idNumber'] ?? '';
-        controllers['bodyNumber']?.text = userData['bodyNumber'] ?? '';
-        controllers['email']?.text = userData['email'] ?? '';
-        controllers['phoneNumber']?.text = userData['phoneNumber'] ?? '';
+        final firstName = userData['firstName'] ?? '';
+        final lastName = userData['lastName'] ?? '';
+        _fullNameController.text = '$firstName $lastName';
+        _birthdateController.text = userData['birthdate'] ?? '';
+        _idNumberController.text = userData['idNumber'] ?? '';
+        _bodyNumberController.text = userData['bodyNumber'] ?? '';
+        _emailController.text = userData['email'] ?? '';
+        _phoneNumberController.text = userData['phoneNumber'] ?? '';
         _driverPhotoUrl = userData['driverPhoto'];
       });
     }
   }
 
   Future<void> _updateUserData() async {
+    final names = _fullNameController.text.split(' ');
+    final firstName = names.length > 1 ? names[0] : '';
+    final lastName = names.length > 1 ? names.sublist(1).join(' ') : names.first;
+
     Map<String, dynamic> newData = {
-      'firstName': controllers['firstName']?.text ?? '',
-      'lastName': controllers['lastName']?.text ?? '',
-      'birthdate': controllers['birthdate']?.text ?? '',
-      'idNumber': controllers['idNumber']?.text ?? '',
-      'bodyNumber': controllers['bodyNumber']?.text ?? '',
-      'email': controllers['email']?.text ?? '',
-      'phoneNumber': controllers['phoneNumber']?.text ?? '',
+      'firstName': firstName,
+      'lastName': lastName,
+      'birthdate': _birthdateController.text,
+      'idNumber': _idNumberController.text,
+      'bodyNumber': _bodyNumberController.text,
+      'email': _emailController.text,
+      'phoneNumber': _phoneNumberController.text,
     };
 
     await _database.child('driversAccount').child(userKey).update(newData);
@@ -152,7 +157,6 @@ class _ProfilePageState extends State<ProfilePage> {
 
       await _database
           .child('driversAccount')
-       //   .child(userKey)
           .child(user.uid)
           .update({'driverPhoto': photoUrl});
 
@@ -198,64 +202,138 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Profile'),
+        title: const Text(
+          'Profile',
+          style: TextStyle(
+            color: Color.fromARGB(255, 15, 27, 90),
+          ),
+        ),
+        leading: IconButton(
+          onPressed: () {
+            Navigator.pop(context);
+          },
+          icon: const Icon(
+            Icons.arrow_back,
+            color: Color.fromARGB(255, 15, 27, 90),
+          ),
+        ),
         actions: [
           IconButton(
-            icon: Icon(Icons.save),
-            onPressed: _updateUserData,
-          ),
-          IconButton(
-            icon: Icon(Icons.logout),
+            icon: const Icon(Icons.logout),
+            color: Color.fromARGB(255, 15, 27, 90),
             onPressed: _logout,
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-           CachedNetworkImage(
-              imageUrl: _driverPhotoUrl ?? '',
-              placeholder: (context, url) => CircularProgressIndicator(),
-              errorWidget: (context, url, error) => Icon(Icons.error),
-              imageBuilder: (context, imageProvider) => CircleAvatar(
-                radius: 50,
-                backgroundImage: imageProvider,
+      body: Padding(
+        padding: const EdgeInsets.all(30.0),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Stack(
+                  children: [
+                    Container(
+                      width: 105, // Slightly larger to accommodate the border
+                      height: 105, // Slightly larger to accommodate the border
+                      decoration: BoxDecoration(
+                        color: Colors.white, // Background color for the container
+                        shape: BoxShape.circle, // Ensures the border is circular
+                        border: Border.all(
+                          color: Color.fromARGB(255, 32, 2, 87), // Border color
+                          width: 4, // Border width
+                        ),
+                      ),
+                      child: ClipOval(
+                        child: _imageFile != null
+                            ? Image.file(
+                                _imageFile!,
+                                width: 80,
+                                height: 80,
+                                fit: BoxFit.cover,
+                              )
+                            : CachedNetworkImage(
+                                imageUrl: _driverPhotoUrl ?? 
+                                    "https://firebasestorage.googleapis.com/v0/b/passenger-signuplogin.appspot.com/o/avatarman.png?alt=media&token=11c39289-3c10-4355-9537-9003913dbeef",
+                                width: 80,
+                                height: 80,
+                                fit: BoxFit.cover,
+                                placeholder: (context, url) => CircularProgressIndicator(),
+                                errorWidget: (context, url, error) => Icon(Icons.error),
+                              ),
+                      ),
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: InkWell(
+                        onTap: _pickImage,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.blue,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Colors.white,
+                              width: 2,
+                            ),
+                          ),
+                          child: const Icon(
+                            Icons.camera_alt,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            TextButton(
-              onPressed: _pickImage,
-              child: Text('Upload Profile Picture'),
-            ),
-            TextFormField(
-              controller: controllers['firstName'],
-              decoration: InputDecoration(labelText: 'First Name'),
-            ),
-            TextFormField(
-              controller: controllers['lastName'],
-              decoration: InputDecoration(labelText: 'Last Name'),
-            ),
-            TextFormField(
-              controller: controllers['birthdate'],
-              decoration: InputDecoration(labelText: 'Birthdate'),
-            ),
-            TextFormField(
-              controller: controllers['idNumber'],
-              decoration: InputDecoration(labelText: 'ID Number'),
-            ),
-            TextFormField(
-              controller: controllers['bodyNumber'],
-              decoration: InputDecoration(labelText: 'Body Number'),
-            ),
-            TextFormField(
-              controller: controllers['email'],
-              decoration: InputDecoration(labelText: 'Email'),
-            ),
-            TextFormField(
-              controller: controllers['phoneNumber'],
-              decoration: InputDecoration(labelText: 'Phone Number'),
-            ),
-          ],
+              SizedBox(height: 5),
+              _buildTextField('Full Name', _fullNameController),
+              _buildTextField('Birthdate', _birthdateController),
+              _buildTextField('ID Number', _idNumberController),
+              _buildTextField('Body Number', _bodyNumberController),
+              _buildTextField('Email', _emailController),
+              _buildTextField('Phone Number', _phoneNumberController),
+              SizedBox(height: 8),
+              Center(
+                child: ElevatedButton(
+                  onPressed: () {
+                    _updateUserData();
+                    // Optionally show a confirmation message
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color.fromARGB(255, 15, 27, 90),
+                    padding: EdgeInsets.symmetric(horizontal: 40, vertical: 13),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
+                  child: Text(
+                    'Save',
+                    style: TextStyle(fontSize: 18),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField(String label, TextEditingController controller) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: TextField(
+        controller: controller,
+        decoration: InputDecoration(
+          labelText: label,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10.0),
+          ),
+          contentPadding: EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0), // Adjusted padding
         ),
       ),
     );

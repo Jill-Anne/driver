@@ -45,7 +45,24 @@ class _NewAdvanceBookingState extends State<NewAdvanceBooking> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Pending Advance Booking'),
+        title: Padding(
+          padding: const EdgeInsets.only(left: 0), // Add padding to the left of the title
+          child: const Text(
+            'Pending Advance Booking',
+            style: TextStyle(
+              color: Color.fromARGB(255, 1, 42, 123)
+            ),
+          ),
+        ),
+        leading: IconButton(
+          onPressed: () {
+            Navigator.pop(context);
+          },
+          icon: const Icon(
+            Icons.arrow_back,
+            color: Color.fromARGB(255, 1, 42, 123)
+          ),
+        ),
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance

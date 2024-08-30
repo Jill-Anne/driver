@@ -79,7 +79,22 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'DriversApp',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        // Ensure all elements are using the correct colors
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.white, // Set seed color to white
+          primary: Colors.white,
+          secondary: Colors.white,
+        ),
+        scaffoldBackgroundColor: Colors.white, // Set background color for Scaffold
+        appBarTheme: AppBarTheme(
+          backgroundColor: Colors.white, // Set AppBar background color
+          foregroundColor: Colors.black, // Set AppBar text color
+        ),
+        backgroundColor: Colors.white, // Set default background color
+        textTheme: TextTheme(
+          bodyText1: TextStyle(color: Colors.black), // Default text color
+          bodyText2: TextStyle(color: Colors.black54),
+        ),
         useMaterial3: true,
       ),
       home: FutureBuilder(
