@@ -96,7 +96,7 @@ class _DashboardState extends State<Dashboard>
               height: 24,
               width: 24,
             ),
-            label: "Advance Bookings",
+            label: "Service Request",
           ),
           BottomNavigationBarItem(
             icon: Image.asset(

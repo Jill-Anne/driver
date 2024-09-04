@@ -200,31 +200,25 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
+return Scaffold(
+  appBar: AppBar(
+    title: const Align(
+      alignment: Alignment.center, // Center the title within the AppBar
+      child: Padding(
+        padding: EdgeInsets.only(top: 16.0), // Add margin above the title
+        child: Text(
           'Profile',
           style: TextStyle(
-            color: Color.fromARGB(255, 15, 27, 90),
+            color: Color.fromARGB(255, 1, 42, 123),
+            fontWeight: FontWeight.bold,
+            fontSize: 28, // You can adjust the font size as needed
           ),
         ),
-        leading: IconButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
-          icon: const Icon(
-            Icons.arrow_back,
-            color: Color.fromARGB(255, 15, 27, 90),
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            color: Color.fromARGB(255, 15, 27, 90),
-            onPressed: _logout,
-          ),
-        ],
       ),
+    ),
+    backgroundColor: Colors.white, // You can set the AppBar background color if needed
+  ),
+
       body: Padding(
         padding: const EdgeInsets.all(30.0),
         child: SingleChildScrollView(

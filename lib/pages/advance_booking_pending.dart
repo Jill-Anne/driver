@@ -43,10 +43,25 @@ class _AdvanceBookingState extends State<AdvanceBooking> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Advance Booking'),
+return Scaffold(
+  appBar: AppBar(
+    title: const Align(
+      alignment: Alignment.center, // Center the title within the AppBar
+      child: Padding(
+        padding: EdgeInsets.only(top: 16.0), // Add margin above the title
+        child: Text(
+          'Service Requests',
+          style: TextStyle(
+            color: Color.fromARGB(255, 1, 42, 123),
+            fontWeight: FontWeight.bold,
+            fontSize: 20, // You can adjust the font size as needed
+          ),
+        ),
       ),
+    ),
+    backgroundColor: Colors.white, // You can set the AppBar background color if needed
+  ),
+
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('Advance Bookings')
@@ -80,168 +95,179 @@ class _AdvanceBookingState extends State<AdvanceBooking> {
     );
   }
 
-  Widget _buildTripCard(trip) {
-    return GestureDetector(
-      onTap: () {
-        showDialog(
-          context: context,
-          builder: (context) {
-            return Dialog(
-              backgroundColor: const Color(0xFF2E3192),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Center(
-                      child: Text('Would you accept this Service?',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                              fontSize: 18)),
-                    ),
-                    const Center(
-                      child: Text(
-                          'After accepting, you will see full passenger details',
-                          style: TextStyle(
-                              fontWeight: FontWeight.normal,
-                              color: Colors.white,
-                              fontSize: 11)),
-                    ),
-                    const SizedBox(
-                      height: 10,
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        Container(
-                          width: 100,
-                          margin: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical:
-                                  10), // Adjusted margin for better spacing
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                          child: ElevatedButton(
-                            onPressed: () {
-                              Navigator.pop(context);
-                            },
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 10),
-                              backgroundColor: Colors
-                                  .grey, // Use the color from your reusable widget
-                            ),
-                            child: const Text(
-                              'Cancel', // Custom text for the booking action
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ),
-                        ),
-                        Container(
-                          width: 100,
-                          margin: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical:
-                                  10), // Adjusted margin for better spacing
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              await FirebaseFirestore.instance
-                                  .collection('Advance Bookings')
-                                  .doc(trip.id)
-                                  .update({
-                                'status': 'Accepted',
-                                'drivername': name,
-                                'driverid': id,
-                                'driverbodynumber': bodynumber,
-                              });
-                              Navigator.pop(context);
-                            },
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 10),
-                              backgroundColor: Colors
-                                  .green, // Use the color from your reusable widget
-                            ),
-                            child: const Text(
-                              'Accept', // Custom text for the booking action
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(
-                      height: 10,
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-      child: Card(
-        color: Colors.grey[200],
-        elevation: 10,
-        margin: const EdgeInsets.all(10),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+ Widget _buildTripCard(trip) {
+  // Calculate the duration in days
+  DateTime startDate = trip['date'].toDate();
+  DateTime endDate = trip['dateto'].toDate();
+  int daysDifference = endDate.difference(startDate).inDays + 1;
+
+  // Format the service duration
+  String serviceDuration = "$daysDifference Day Service";
+
+  return GestureDetector(
+    onTap: () {
+      showDialog(
+        context: context,
+        builder: (context) {
+          return Dialog(
+            backgroundColor: const Color(0xFF2E3192),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(
-                    Icons.account_circle,
-                    size: 35,
+                  const Center(
+                    child: Text('Would you accept this Service?',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            fontSize: 18)),
+                  ),
+                  const Center(
+                    child: Text(
+                        'After accepting, you will see full passenger details',
+                        style: TextStyle(
+                            fontWeight: FontWeight.normal,
+                            color: Colors.white,
+                            fontSize: 11)),
                   ),
                   const SizedBox(
-                    width: 10,
+                    height: 10,
                   ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      Text(trip['name'],
-                          style: const TextStyle(
-                              color: Colors.black, fontSize: 16)),
-                      Text(trip['mynum'],
-                          style: const TextStyle(
-                              color: Colors.black, fontSize: 12)),
+                      Container(
+                        width: 100,
+                        margin: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical:
+                                10), // Adjusted margin for better spacing
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            backgroundColor: Colors
+                                .grey, // Use the color from your reusable widget
+                          ),
+                          child: const Text(
+                            'Cancel', // Custom text for the booking action
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      ),
+                      Container(
+                        width: 100,
+                        margin: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical:
+                                10), // Adjusted margin for better spacing
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            await FirebaseFirestore.instance
+                                .collection('Advance Bookings')
+                                .doc(trip.id)
+                                .update({
+                              'status': 'Accepted',
+                              'drivername': name,
+                              'driverid': id,
+                              'driverbodynumber': bodynumber,
+                            });
+                            Navigator.pop(context);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            backgroundColor: Colors
+                                .green, // Use the color from your reusable widget
+                          ),
+                          child: const Text(
+                            'Accept', // Custom text for the booking action
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      ),
                     ],
+                  ),
+                  const SizedBox(
+                    height: 10,
                   ),
                 ],
               ),
-              const SizedBox(
-                height: 20,
-              ),
-              const Text("1 Day Service",
-                  style: TextStyle(color: Colors.black, fontSize: 14)),
-              const SizedBox(
-                height: 10,
-              ),
-              Text(DateFormat.yMMMd().add_jm().format(trip['date'].toDate()),
-                  style: const TextStyle(color: Colors.black, fontSize: 12)),
-              const Divider(),
-              Text(trip['to'],
-                  style: const TextStyle(color: Colors.black, fontSize: 12)),
-            ],
-          ),
+            ),
+          );
+        },
+      );
+    },
+    child: Card(
+      color: Colors.grey[200],
+      elevation: 10,
+      margin: const EdgeInsets.all(10),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(
+                  Icons.account_circle,
+                  size: 35,
+                ),
+                const SizedBox(
+                  width: 10,
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(trip['name'],
+                        style: const TextStyle(
+                            color: Colors.black, fontSize: 16)),
+                    Text(trip['mynum'],
+                        style: const TextStyle(
+                            color: Colors.black, fontSize: 12)),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(
+              height: 20,
+            ),
+            Text(serviceDuration,
+                style: const TextStyle(color: Colors.black, fontSize: 14)),
+            const SizedBox(
+              height: 10,
+            ),
+            Text(
+              '${DateFormat.yMMMd().format(startDate)} - ${DateFormat.yMMMd().format(endDate)}\n${trip['time']}',
+              style: const TextStyle(color: Colors.black, fontSize: 12),
+            ),
+            const Divider(),
+            Text(trip['to'],
+                style: const TextStyle(color: Colors.black, fontSize: 12)),
+          ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
+
 
   void _deleteTrip(String key) {
     // Delete the trip entry from Firebase

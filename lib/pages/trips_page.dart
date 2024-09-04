@@ -55,6 +55,7 @@ class _TripsPageState extends State<TripsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      
       body: Stack(
         children: [
           // Background image to fill the entire screen
@@ -64,6 +65,22 @@ class _TripsPageState extends State<TripsPage> {
               fit: BoxFit.cover, // Ensure the image covers the full screen
             ),
           ),
+          // Centered text below the image
+        // Positioned(
+        //   bottom: 560, // Adjust this value to position the text from the bottom
+        //   left: 0,
+        //   right: 0,
+        //   child: Center(
+        //     child: Text(
+        //       'Dashboard',
+        //       style: TextStyle(
+        //         color: Color.fromARGB(255, 15, 27, 90), // Set text color to blue
+        //         fontSize: 30, // Adjust font size as needed
+        //         fontWeight: FontWeight.bold, // Set font weight to bold
+        //       ),
+        //     ),
+        //   ),
+        // ),
 
           // Main content with scrollable feature
           Column(
