@@ -78,6 +78,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'DriversApp',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         // Ensure all elements are using the correct colors
         colorScheme: ColorScheme.fromSeed(

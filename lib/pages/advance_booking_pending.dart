@@ -95,7 +95,7 @@ return Scaffold(
     );
   }
 
- Widget _buildTripCard(trip) {
+ Widget _buildTripCard(DocumentSnapshot trip) {
   // Calculate the duration in days
   DateTime startDate = trip['date'].toDate();
   DateTime endDate = trip['dateto'].toDate();
@@ -115,49 +115,44 @@ return Scaffold(
               padding: const EdgeInsets.all(16),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center, // Center content
                 children: [
-                  const Center(
-                    child: Text('Would you accept this Service?',
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            fontSize: 18)),
+                  const Text(
+                    'Would you accept this Service?',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      fontSize: 18,
+                    ),
+                    textAlign: TextAlign.center, // Center text
                   ),
-                  const Center(
-                    child: Text(
-                        'After accepting, you will see full passenger details',
-                        style: TextStyle(
-                            fontWeight: FontWeight.normal,
-                            color: Colors.white,
-                            fontSize: 11)),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'After accepting, you will see full passenger details',
+                    style: TextStyle(
+                      fontWeight: FontWeight.normal,
+                      color: Colors.white,
+                      fontSize: 11,
+                    ),
+                    textAlign: TextAlign.center, // Center text
                   ),
-                  const SizedBox(
-                    height: 10,
-                  ),
+                  const SizedBox(height: 20),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    mainAxisAlignment: MainAxisAlignment.center, // Center buttons
                     children: [
                       Container(
                         width: 100,
-                        margin: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical:
-                                10), // Adjusted margin for better spacing
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
+                        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
                         child: ElevatedButton(
                           onPressed: () {
                             Navigator.pop(context);
                           },
                           style: ElevatedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 10),
-                            backgroundColor: Colors
-                                .grey, // Use the color from your reusable widget
+                            backgroundColor: Colors.grey,
                           ),
                           child: const Text(
-                            'Cancel', // Custom text for the booking action
+                            'Cancel',
                             style: TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
@@ -166,15 +161,10 @@ return Scaffold(
                           ),
                         ),
                       ),
+                      const SizedBox(width: 16), // Space between buttons
                       Container(
                         width: 100,
-                        margin: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical:
-                                10), // Adjusted margin for better spacing
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
+                        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
                         child: ElevatedButton(
                           onPressed: () async {
                             await FirebaseFirestore.instance
@@ -190,11 +180,10 @@ return Scaffold(
                           },
                           style: ElevatedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 10),
-                            backgroundColor: Colors
-                                .green, // Use the color from your reusable widget
+                            backgroundColor: Colors.green,
                           ),
                           child: const Text(
-                            'Accept', // Custom text for the booking action
+                            'Accept',
                             style: TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
@@ -205,9 +194,7 @@ return Scaffold(
                       ),
                     ],
                   ),
-                  const SizedBox(
-                    height: 10,
-                  ),
+                  const SizedBox(height: 10),
                 ],
               ),
             ),

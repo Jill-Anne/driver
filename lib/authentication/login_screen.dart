@@ -103,6 +103,18 @@ class _LoginScreenState extends State<LoginScreen> {
                     labelText: "Email",
                     prefixIcon: Icon(Icons.email),
                     border: OutlineInputBorder(),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.grey, width: 1.0),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.black, width: 2.0),
+                    ),
+                    floatingLabelBehavior: FloatingLabelBehavior.auto,
+                    labelStyle: TextStyle(color: Colors.black),
+                  ),
+                  style: TextStyle(
+                    decoration: TextDecoration.none, // No underline
+                    color: Colors.black,
                   ),
                   keyboardType: TextInputType.emailAddress,
                 ),
@@ -113,6 +125,18 @@ class _LoginScreenState extends State<LoginScreen> {
                     labelText: "Birthdate (MMDDYYYY)",
                     prefixIcon: Icon(Icons.calendar_today),
                     border: OutlineInputBorder(),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.grey, width: 1.0),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.black, width: 2.0),
+                    ),
+                    floatingLabelBehavior: FloatingLabelBehavior.auto,
+                    labelStyle: TextStyle(color: Colors.black),
+                  ),
+                  style: TextStyle(
+                    decoration: TextDecoration.none, // No underline
+                    color: Colors.black,
                   ),
                   keyboardType: TextInputType.number,
                 ),
@@ -133,4 +157,3 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
-
