@@ -415,8 +415,11 @@ class _NewAdvanceBookingState extends State<NewAdvanceBooking> {
                     },
                   );
                 },
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red,       shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(3), // Rounded borders
+      ),),
                 child: const Text('Cancel Request'),
+                
               ),
               const SizedBox(width: 16), // Space between buttons
               // ElevatedButton(

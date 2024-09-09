@@ -2,7 +2,7 @@ import 'package:driver/pages/home_page.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:driver/reusable_widgets.dart';
-
+import 'package:lottie/lottie.dart';
 import '../pages/dashboard.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -31,6 +31,42 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     try {
+      // Show full-screen "Logging in..." animation while processing the login
+      showDialog(
+        context: context,
+        barrierDismissible: false, // Prevents dismissing
+        builder: (BuildContext context) {
+          return Scaffold(
+            backgroundColor: Colors.white,// Colors.white.withOpacity(0.5),
+            body: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Fullscreen Lottie animation for "Loading" or "Logging in"
+                  Lottie.asset(
+                    'assets/images/loading.json', // Path to your Lottie animation
+                    width: MediaQuery.of(context).size.width * 0.9,
+                    height: MediaQuery.of(context).size.width * 0.9,
+                    fit: BoxFit.cover,
+                    repeat: true,
+                  ),
+                  const SizedBox(height: 50),
+                  const Text(
+                    "Authenticating",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color.fromARGB(255, 1, 42, 123),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+
+      // Simulate login process (replace with actual login code)
       UserCredential userCredential = await _auth.signInWithEmailAndPassword(
         email: email,
         password: birthdate,
@@ -38,6 +74,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (userCredential.user != null) {
         print('Login successful.');
+
+        // Delay closing the dialog to let the animation finish
+        await Future.delayed(const Duration(seconds: 2));
+
+        // Close the "Logging in..." animation dialog after success
+        Navigator.pop(context);
+
+        // Navigate to Dashboard
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const Dashboard()),
@@ -50,6 +94,9 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
     } catch (error) {
+      // Close the animation dialog before showing error
+      Navigator.pop(context);
+
       print('Login failed: $error');
       _showErrorDialog(context, "An error occurred: $error");
     }
@@ -72,6 +119,8 @@ class _LoginScreenState extends State<LoginScreen> {
       },
     );
   }
+
+
 
   @override
   Widget build(BuildContext context) {

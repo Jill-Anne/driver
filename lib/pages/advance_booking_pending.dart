@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:driver/global/global_var.dart';
 import 'package:driver/pages/profile_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -25,18 +26,23 @@ class _AdvanceBookingState extends State<AdvanceBooking> {
 
   final tripRequestsRef = FirebaseDatabase.instance.ref().child("tripRequests");
 
+  String lastName = '';
   String name = '';
   String bodynumber = '';
   String id = '';
+    String phoneNumber = '';
 
   void _getUserData() async {
     final userData = await retrieveUserData();
     if (userData.isNotEmpty) {
       setState(() {
         name = userData['firstName'] ?? '';
+        lastName = userData['lastName'] ?? '';
 
         id = userData['idNumber'] ?? '';
         bodynumber = userData['bodyNumber'] ?? '';
+        phoneNumber = userData['phoneNumber'] ?? '';
+
       });
     }
   }
@@ -126,13 +132,13 @@ return Scaffold(
                     ),
                     textAlign: TextAlign.center, // Center text
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 15),
                   const Text(
                     'After accepting, you will see full passenger details',
                     style: TextStyle(
                       fontWeight: FontWeight.normal,
                       color: Colors.white,
-                      fontSize: 11,
+                      fontSize: 14,
                     ),
                     textAlign: TextAlign.center, // Center text
                   ),
@@ -150,6 +156,9 @@ return Scaffold(
                           style: ElevatedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 10),
                             backgroundColor: Colors.grey,
+                                  shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(3), // Rounded borders
+      ),
                           ),
                           child: const Text(
                             'Cancel',
@@ -172,15 +181,20 @@ return Scaffold(
                                 .doc(trip.id)
                                 .update({
                               'status': 'Accepted',
-                              'drivername': name,
+                              'drivername': name, 
+                              'driverlastName': lastName,
                               'driverid': id,
                               'driverbodynumber': bodynumber,
+                              'phoneNumber' : phoneNumber,
                             });
                             Navigator.pop(context);
                           },
                           style: ElevatedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 10),
                             backgroundColor: Colors.green,
+                                  shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(3), // Rounded borders
+      ),
                           ),
                           child: const Text(
                             'Accept',

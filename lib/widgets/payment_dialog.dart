@@ -123,22 +123,39 @@ class _PaymentDialogState extends State<PaymentDialog> {
                         ),
                       ),
                       const SizedBox(height: 20),
-                      ElevatedButton(
-                        onPressed: () {
+                      SizedBox(
+  width: 180,  // Set button width
+  height: 50, 
+                      child: ElevatedButton(
+                        onPressed: () async {
                           Navigator.pop(context);
                           Navigator.pop(context);
 
                         //  Restart.restartApp();
+
+                              // After payment, clear the latest fare amount from Firestore
+      await FirebaseFirestore.instance
+          .collection('currentFare')
+          .doc('latestFare')
+          .set({'amount': ''}); // Set the amount to 0 or empty
+      print('Latest fare has been cleared.');
                         },
-                        style: ElevatedButton.styleFrom(
-                          foregroundColor: Colors.white, backgroundColor: Colors.green,
-                          minimumSize: Size(double.infinity, 50),
-                        ),
-                        child: const Text(
-                          "COLLECT CASH",
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
+                         style: ElevatedButton.styleFrom(
+      backgroundColor: const Color(0xFF2E3192),//Colors.green,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(5), // Border radius here
+      ),
+    ),
+    child: const Text(
+      "COLLECT CASH",
+      style: TextStyle(
+        color: Colors.white,  // Set text color to white
+        fontWeight: FontWeight.bold,  // Bold text
+        fontSize: 18,  // Set font size
+      ),
+    ),
                       ),
+                      )
                     ],
                   );
                 }

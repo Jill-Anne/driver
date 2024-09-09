@@ -176,7 +176,7 @@ class _NewTripPageState extends State<NewTripPage>
       strokeWidth: 4,
       radius: 14,
       center: destinationLocationLatLng,
-      fillColor: Colors.orange,
+      fillColor: Colors.red,
     );
 
     setState(() {
@@ -609,71 +609,74 @@ void initState() {
 
                     const SizedBox(height: 25,),
 
-                    Center(
-                      child: ElevatedButton(
-                        onPressed: () async
-                        {
-                          //arrived button
-                          if(statusOfTrip == "accepted")
-                          {
-                            setState(() {
-                              buttonTitleText = "START TRIP";
-                              buttonColor = Colors.green;
-                            });
+                   Center(
+  child: ElevatedButton(
+    onPressed: () async {
+      // Arrived button
+      if (statusOfTrip == "accepted") {
+        setState(() {
+          buttonTitleText = "START TRIP";
+          buttonColor = const Color(0xFF2E3192); // Design color
+        });
 
-                            statusOfTrip = "arrived";
+        statusOfTrip = "arrived";
 
-                            FirebaseDatabase.instance.ref()
-                                .child("tripRequests")
-                                .child(widget.newTripDetailsInfo!.tripID!)
-                                .child("status").set("arrived");
+        FirebaseDatabase.instance.ref()
+            .child("tripRequests")
+            .child(widget.newTripDetailsInfo!.tripID!)
+            .child("status").set("arrived");
 
-                            showDialog(
-                                barrierDismissible: false,
-                                context: context,
-                                builder: (BuildContext context) => LoadingDialog(messageText: 'Please wait...',)
-                            );
+        showDialog(
+          barrierDismissible: false,
+          context: context,
+          builder: (BuildContext context) => LoadingDialog(messageText: 'Please wait...'),
+        );
 
-                            await obtainDirectionAndDrawRoute(
-                              widget.newTripDetailsInfo!.pickUpLatLng,
-                              widget.newTripDetailsInfo!.dropOffLatLng,
-                            );
+        await obtainDirectionAndDrawRoute(
+          widget.newTripDetailsInfo!.pickUpLatLng,
+          widget.newTripDetailsInfo!.dropOffLatLng,
+        );
 
-                            Navigator.pop(context);
-                          }
-                          //start trip button
-                          else if(statusOfTrip == "arrived")
-                          {
-                            setState(() {
-                              buttonTitleText = "END TRIP";
-                              buttonColor = Colors.amber;
-                            });
+        Navigator.pop(context);
+      }
+      // Start trip button
+      else if (statusOfTrip == "arrived") {
+        setState(() {
+          buttonTitleText = "END TRIP";
+          buttonColor = Colors.red; // Amber color
+        });
 
-                            statusOfTrip = "ontrip";
+        statusOfTrip = "ontrip";
 
-                            FirebaseDatabase.instance.ref()
-                                .child("tripRequests")
-                                .child(widget.newTripDetailsInfo!.tripID!)
-                                .child("status").set("ontrip");
-                          }
-                          //end trip button
-                          else if(statusOfTrip == "ontrip")
-                          {
-                            //end the trip
-                            endTripNow();
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: buttonColor,
-                        ),
-                        child: Text(
-                          buttonTitleText,
-                          style: const TextStyle(
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
+        FirebaseDatabase.instance.ref()
+            .child("tripRequests")
+            .child(widget.newTripDetailsInfo!.tripID!)
+            .child("status").set("ontrip");
+      }
+      // End trip button
+      else if (statusOfTrip == "ontrip") {
+        // End the trip
+        endTripNow();
+      }
+    },
+    style: ElevatedButton.styleFrom(
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24), // Padding for size
+      backgroundColor: buttonColor, // Dynamic button color
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(5), // Rounded corners
+      ),
+    ),
+    child: Text(
+      buttonTitleText, // Dynamic button text
+      style: const TextStyle(
+        color: Colors.white, // White text color
+        fontWeight: FontWeight.bold, // Bold text
+        fontSize: 18, // Font size
+      ),
+    ),
+  ),
+),
+
                   ],
                 ),
               ),
