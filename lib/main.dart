@@ -3,12 +3,15 @@ import 'dart:developer';
 import 'package:driver/env/env.dart';
 import 'package:driver/pages/dashboard.dart';
 import 'package:driver/pages/home_page.dart';
+import 'package:driver/pushNotification/reminderNotification_initialization.dart';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:driver/authentication/login_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:timezone/data/latest.dart' as tz;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -67,9 +70,28 @@ void main() async {
   }
 
   await _fetchAndLogFirebaseToken(); // Ensure this runs before the app starts
+  tz.initializeTimeZones();
 
+
+    
+  try {
+    await Firebase.initializeApp();
+    print("Firebase initialized");
+
+    await NotificationService.init();
+    print("Notification service initialized");
+
+    // Optionally schedule reminders for accepted bookings
+    await NotificationService.scheduleReminderForAcceptedBookings();
+    print("Scheduled reminders for accepted bookings");
+  } catch (e) {
+    print("Error initializing app: $e");
+  }
   runApp(const MyApp());
 }
+
+
+
 
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
