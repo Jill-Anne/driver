@@ -148,15 +148,18 @@ class _HomePageState extends State<HomePage> {
                             ),
                             const SizedBox(height: 25),
                             Row(
-                              children: [
-                                Expanded(
-                                  child: ElevatedButton(
-                                    onPressed: () {
-                                      Navigator.pop(context);
-                                    },
-                                    child: const Text("BACK"),
-                                  ),
-                                ),
+children: [
+  Expanded(
+    child: ElevatedButton(
+      onPressed: () {
+        Navigator.pop(context);
+      },
+      style: ElevatedButton.styleFrom(
+        foregroundColor: Colors.black, backgroundColor: const Color.fromARGB(255, 186, 196, 204), // Text color
+      ),
+      child: const Text("BACK"),
+    ),
+  ),
                                 const SizedBox(width: 16),
                                 Expanded(
                                   child: ElevatedButton(

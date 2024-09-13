@@ -29,6 +29,30 @@ class PushNotificationService {
       }
     };
 
+    // final fcmPayload = {
+    //   "to": deviceToken,
+    //   "notification": {
+    //     "title": "Trip Reminder",
+    //     "body": "Your trip is coming up soon!"
+    //   },
+    //   "data": {
+    //     "click_action": "FLUTTER_NOTIFICATION_CLICK",
+    //     "trip_id": tripID
+    //   }
+    // };
+
+    final fcmPayload = {
+  "to": deviceToken,
+  "data": {
+    "click_action": "FLUTTER_NOTIFICATION_CLICK",
+    "title": "Trip Reminder",  // Move notification details to data
+    "body": "Your trip is coming up soon!",
+    "trip_id": tripID,
+    "status": status,
+  }
+};
+
+
     print('Preparing to send FCM notification...');
     print('Device Token: $deviceToken');
     print('Notification Body: ${jsonEncode(messageMap)}');
@@ -45,7 +69,7 @@ class PushNotificationService {
           "Content-Type": "application/json",
           "Authorization": "Bearer $accessToken",
         },
-        body: jsonEncode(messageMap),
+        body: jsonEncode(fcmPayload), // Use fcmPayload here
       );
 
       print('FCM request sent.');
@@ -53,7 +77,7 @@ class PushNotificationService {
             "Content-Type": "application/json",
             "Authorization": "Bearer $accessToken",
           })}');
-      print('Request Body: ${jsonEncode(messageMap)}');
+      print('Request Body: ${jsonEncode(fcmPayload)}'); // Updated to show fcmPayload
       print('Response Status Code: ${response.statusCode}');
       print('Response Body: ${response.body}');
 

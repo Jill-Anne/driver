@@ -1,3 +1,4 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -5,21 +6,33 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:intl/intl.dart'; // Ensure this import is present for date formatting
 
 class NotificationService {
-  static final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+  static final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
 
-  static Future<void> onDidReceiveNotification(NotificationResponse notificationResponse) async {
-    print("Notification received: ${notificationResponse.payload}");
+static Future<void> onDidReceiveNotification(
+    NotificationResponse notificationResponse) async {
+  print("Notification received: ${notificationResponse.payload}");
+
+  // Parse the payload if you want to handle deep links or navigate to a specific page
+  if (notificationResponse.payload != null) {
+    // Example: Navigate to a screen based on the payload data
+    // Navigate to the page or perform some action
   }
+}
+
 
   static Future<void> init() async {
     print("Initializing notification service");
 
     try {
       const AndroidInitializationSettings androidInitializationSettings =
-          AndroidInitializationSettings("@mipmap/ic_launcher");
-      const DarwinInitializationSettings iOSInitializationSettings = DarwinInitializationSettings();
+          AndroidInitializationSettings(
+              "@mipmap/ic_launcher"); // Replace with your icon name if needed
+      const DarwinInitializationSettings iOSInitializationSettings =
+          DarwinInitializationSettings();
 
-      const InitializationSettings initializationSettings = InitializationSettings(
+      const InitializationSettings initializationSettings =
+          InitializationSettings(
         android: androidInitializationSettings,
         iOS: iOSInitializationSettings,
       );
@@ -31,9 +44,10 @@ class NotificationService {
       );
 
       await flutterLocalNotificationsPlugin
-          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>()
           ?.requestNotificationsPermission();
-      
+
       print("Notification service initialized successfully");
     } catch (e) {
       print("Error initializing notification service: $e");
@@ -48,7 +62,7 @@ class NotificationService {
             'Instant Notifications',
             importance: Importance.max,
             priority: Priority.high,
-            icon: 'logo',
+            icon: 'logo', // Ensure 'logo' is a valid drawable resource name
           ),
           iOS: DarwinNotificationDetails());
 
@@ -65,12 +79,13 @@ class NotificationService {
     }
   }
 
-static Future<void> scheduleNotification(int id, String title, String body, DateTime scheduledTime) async {
+  static Future<void> scheduleNotification(
+      int id, String title, String body, DateTime scheduledTime) async {
     try {
       await flutterLocalNotificationsPlugin.zonedSchedule(
         id,
-        title, // Notification title (e.g., 'Upcoming Trip Reminder')
-        body,  // Custom body with the passenger name, date, time, and locations
+        title,
+        body,
         tz.TZDateTime.from(scheduledTime, tz.local),
         const NotificationDetails(
           iOS: DarwinNotificationDetails(),
@@ -80,9 +95,13 @@ static Future<void> scheduleNotification(int id, String title, String body, Date
             importance: Importance.high,
             priority: Priority.high,
             icon: 'logo',
+            fullScreenIntent:
+                true,
+            styleInformation: BigTextStyleInformation(''), 
           ),
         ),
-        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
         matchDateTimeComponents: DateTimeComponents.dateAndTime,
       );
       print("Scheduled notification for $scheduledTime: $title - $body");
@@ -91,15 +110,11 @@ static Future<void> scheduleNotification(int id, String title, String body, Date
     }
   }
 
-  static DateTime combineDateAndTime(Timestamp dateTimestamp, String timeString) {
-    // Convert Timestamp to DateTime
+  static DateTime combineDateAndTime(
+      Timestamp dateTimestamp, String timeString) {
     DateTime date = dateTimestamp.toDate();
-
-    // Parse the time string and combine with the date
-    final timeFormat = DateFormat("h:mm a"); // Define the format of your time string
-    final time = timeFormat.parse(timeString); // Parse the time string
-
-    // Combine date and time
+    final timeFormat = DateFormat("h:mm a");
+    final time = timeFormat.parse(timeString);
     return DateTime(
       date.year,
       date.month,
@@ -109,19 +124,37 @@ static Future<void> scheduleNotification(int id, String title, String body, Date
     );
   }
 
+
+//ADDED
+  static Future<void> showFCMNotification(RemoteMessage message) async {
+  const NotificationDetails platformChannelSpecifics = NotificationDetails(
+      android: AndroidNotificationDetails(
+        'fcm_channel_id',
+        'FCM Notifications',
+        importance: Importance.max,
+        priority: Priority.high,
+        icon: 'logo', // Replace with your logo asset
+      ),
+      iOS: DarwinNotificationDetails());
+
+  await flutterLocalNotificationsPlugin.show(
+    message.hashCode,
+    message.notification?.title ?? 'Title',
+    message.notification?.body ?? 'Body',
+    platformChannelSpecifics,
+  );
+}
+
+
   static Future<void> scheduleReminderForAcceptedBookings() async {
     final firestore = FirebaseFirestore.instance;
 
-    try {
-      print("Querying Firestore for accepted bookings");
-      final querySnapshot = await firestore.collection('Advance Bookings')
-          .where('status', isEqualTo: 'Accepted')
-          .get();
-
-      print("Found ${querySnapshot.docs.length} accepted bookings");
-
+    firestore
+        .collection('Advance Bookings')
+        .where('status', isEqualTo: 'Accepted')
+        .snapshots()
+        .listen((querySnapshot) {
       for (final doc in querySnapshot.docs) {
-        // Ensure 'date', 'time', and other fields are correctly fetched
         final dateField = doc.data()['date'];
         final timeField = doc.data()['time'];
         final nameField = doc.data()['name'];
@@ -129,31 +162,25 @@ static Future<void> scheduleNotification(int id, String title, String body, Date
         final toField = doc.data()['to'];
 
         if (dateField is Timestamp && timeField is String) {
-          final notificationTime = combineDateAndTime(dateField, timeField).subtract(Duration(minutes: 1));
+          final notificationTime = combineDateAndTime(dateField, timeField)
+              .subtract(Duration(minutes: 1));
 
-          // Construct the custom notification body with passenger name, date, time, from, and to
-final notificationBody = 'Passenger: $nameField\n'
-    'Date and Time: ${DateFormat.yMMMd().format(dateField.toDate())} $timeField\n'
-    'From: $fromField\n'
-    'To: $toField\n';
+          final notificationBody = 'Passenger: $nameField\n'
+              'Date and Time: ${DateFormat.yMMMd().format(dateField.toDate())} $timeField\n'
+              'From: $fromField\n'
+              'To: $toField\n';
 
-
-          print("Scheduling notification for booking ID ${doc.id} at $notificationTime");
-
-          // Schedule the notification with the custom body
-          await scheduleNotification(
-            doc.id.hashCode, // Use a unique ID for each notification
-            'Upcoming Trip Reminder', // Custom title
-            notificationBody, // Custom body message
+          scheduleNotification(
+            doc.id.hashCode,
+            'Upcoming Trip Reminder',
+            notificationBody,
             notificationTime,
           );
         } else {
-          print("Error: 'date' or 'time' field is not of the expected type for booking ID ${doc.id}");
+          print(
+              "Error: 'date' or 'time' field is not of the expected type for booking ID ${doc.id}");
         }
       }
-    } catch (e) {
-      print("Error scheduling reminders: $e");
-    }
+    });
   }
-
 }
