@@ -16,30 +16,42 @@ class PushNotificationSystem {
   final FirebaseMessaging firebaseCloudMessaging = FirebaseMessaging.instance;
   final AssetsAudioPlayer audioPlayer = AssetsAudioPlayer();
 
-  Future<void> generateDeviceRegistrationToken() async {
-    try {
-      String? deviceToken = await firebaseCloudMessaging.getToken();
-      print('Generated device token: $deviceToken');
-      if (deviceToken != null) {
-        DatabaseReference referenceOnlineDriver = FirebaseDatabase.instance
-            .ref()
-            .child("driversAccount")
-            .child(FirebaseAuth.instance.currentUser!.uid)
-            .child("deviceToken");
-        
-        await referenceOnlineDriver.set(deviceToken);
-        print('Device token saved to database');
+Future<void> generateDeviceRegistrationToken() async {
+  try {
+    // Get the current user ID
+    String userId = FirebaseAuth.instance.currentUser!.uid;
 
-        await firebaseCloudMessaging.subscribeToTopic("drivers");
-        await firebaseCloudMessaging.subscribeToTopic("users");
-        print('Subscribed to topics: drivers, users');
-      } else {
-        print('Failed to generate device token');
-      }
-    } catch (e) {
-      print('Error generating device token: $e');
+    // Generate a new device token
+    String? deviceToken = await firebaseCloudMessaging.getToken();
+    print('Generated new device token for user $userId: $deviceToken');
+
+    if (deviceToken != null) {
+      // Save the new token to Firebase for the current user
+      DatabaseReference referenceOnlineDriver = FirebaseDatabase.instance
+          .ref()
+          .child("driversAccount")
+          .child(userId)
+          .child("deviceToken");
+      
+      await referenceOnlineDriver.set(deviceToken);
+      print('New device token saved to database for user $userId');
+
+      // Unsubscribe from previous topics
+      await firebaseCloudMessaging.unsubscribeFromTopic("drivers");
+      await firebaseCloudMessaging.unsubscribeFromTopic("users");
+      print('Unsubscribed from previous topics.');
+
+      // Subscribe to topics for the current user
+      await firebaseCloudMessaging.subscribeToTopic("drivers");
+      await firebaseCloudMessaging.subscribeToTopic("users");
+      print('Subscribed to topics: drivers, users for user $userId');
+    } else {
+      print('Failed to generate device token for user $userId');
     }
+  } catch (e) {
+    print('Error generating device token: $e');
   }
+}
 
   void startListeningForNewNotification(BuildContext context) async {
     // Terminated
