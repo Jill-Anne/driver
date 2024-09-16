@@ -485,31 +485,42 @@ void initState() {
             bottom: 0,
             child: Container(
               decoration: const BoxDecoration(
-                color: Colors.black87,
+                color: Color(0xFFF2F8FC),
                 borderRadius: BorderRadius.only(topRight: Radius.circular(17), topLeft: Radius.circular(17)),
                 boxShadow:
                 [
                   BoxShadow(
-                    color: Colors.black26,
+                    color: Colors.black45,
                     blurRadius: 17,
                     spreadRadius: 0.5,
                     offset: Offset(0.7, 0.7),
                   ),
                 ],
               ),
-              height: 256,
+              height: 290,
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
 
+                                Center(
+  child: Container(
+    width: 200, // Adjust the width here
+    child: Divider(
+      height: 8,
+      thickness: 4,
+      color: Colors.grey[400],
+    ),
+  ),
+),
+const SizedBox(height: 9,),
                     //trip duration
                     Center(
                       child: Text(
                         durationText + " - " + distanceText,
                         style: const TextStyle(
-                          color: Colors.green,
+                          color: Colors.black87,
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
                         ),
@@ -527,7 +538,7 @@ void initState() {
                         Text(
                           widget.newTripDetailsInfo!.userName!,
                           style: const TextStyle(
-                            color: Colors.green,
+                            color: Colors.black87,
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                           ),
@@ -547,7 +558,7 @@ void initState() {
                             padding: EdgeInsets.only(right: 10),
                             child: Icon(
                               Icons.phone_android_outlined,
-                              color: Colors.grey,
+                              color: Color(0x662E3192),
                             ),
                           ),
                         ),
@@ -557,29 +568,36 @@ void initState() {
 
                     const SizedBox(height: 15,),
 
-                    //pickup icon and location
-                    Row(
-                      children: [
 
-                        Image.asset(
-                          "assets/images/initial.png",
-                          height: 16,
-                          width: 16,
-                        ),
+// Pickup icon and location
+// Pickup icon and location
+Row(
+  crossAxisAlignment: CrossAxisAlignment.start, // Align text at the top
+  children: [
+    // Move the image down a bit
+    Transform(
+      transform: Matrix4.translationValues(0.0, 4.0, 0.0), // Adjust the vertical offset as needed
+      child: Image.asset(
+        "assets/images/initial.png",
+        height: 16,
+        width: 16,
+      ),
+    ),
+    const SizedBox(width: 8), // Add space between image and text
+    Flexible(
+      child: Text(
+        widget.newTripDetailsInfo!.pickupAddress.toString(),
+        overflow: TextOverflow.visible, // Allow text to overflow and wrap
+        style: const TextStyle(
+          fontSize: 18,
+          color: Colors.black54,
+          fontWeight: FontWeight.bold
+        ),
+      ),
+    ),
+  ],
+),
 
-                        Expanded(
-                          child: Text(
-                            widget.newTripDetailsInfo!.pickupAddress.toString(),
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              color: Colors.grey,
-                            ),
-                          ),
-                        ),
-
-                      ],
-                    ),
 
                     const SizedBox(height: 15,),
 
@@ -592,20 +610,24 @@ void initState() {
                           height: 16,
                           width: 16,
                         ),
-
+const SizedBox(width: 8), // Add space between image and text
                         Expanded(
                           child: Text(
                             widget.newTripDetailsInfo!.dropOffAddress.toString(),
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               fontSize: 18,
-                              color: Colors.grey,
+                              color: Colors.black54,
+                              fontWeight: FontWeight.bold
                             ),
                           ),
                         ),
 
                       ],
                     ),
+
+
+                    
 
                     const SizedBox(height: 25,),
 
@@ -660,7 +682,7 @@ void initState() {
       }
     },
     style: ElevatedButton.styleFrom(
-      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24), // Padding for size
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 28), // Padding for size
       backgroundColor: buttonColor, // Dynamic button color
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(5), // Rounded corners
