@@ -90,6 +90,19 @@ return Scaffold(
 
           final data = snapshot.requireData;
 
+              // Check if there are no pending requests
+    if (data.docs.isEmpty) {
+      return Center(
+        child: Image.asset(
+          'assets/images/noPending.png', // Path to your image
+          height: 300, // Set the desired height
+          width: 300,  // Set the desired width
+          fit: BoxFit.contain, // Adjust the fit of the image
+        ),
+      );
+    }
+
+
           return ListView.builder(
             itemCount: data.docs.length,
             itemBuilder: (context, index) {

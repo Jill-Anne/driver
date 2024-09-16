@@ -56,7 +56,7 @@ class _ProfilePageState extends State<ProfilePage> {
   final DatabaseReference _database = FirebaseDatabase.instance.ref();
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final ImagePicker _picker = ImagePicker();
-  bool _isEditing = false;
+
   TextEditingController _fullNameController = TextEditingController();
   TextEditingController _birthdateController = TextEditingController();
   TextEditingController _idNumberController = TextEditingController();
@@ -64,7 +64,7 @@ class _ProfilePageState extends State<ProfilePage> {
   TextEditingController _emailController = TextEditingController();
   TextEditingController _phoneNumberController = TextEditingController();
   TextEditingController _passwordController = TextEditingController();
-
+bool _isPasswordVisible = false;
 bool _isPasswordSet = false; // Ensure this is defined
   String userKey = '';
   File? _imageFile;
@@ -72,12 +72,19 @@ bool _isPasswordSet = false; // Ensure this is defined
   bool _loadingImage = false;
   double _averageRating = 0.0;
   bool _isLoading = true;
+  bool _isEditing = false;
+  bool _obscureText = true; // Track whether the text is obscured
+  
+ // Whether to obscure the password or not
 
   @override
   void initState() {
     super.initState();
     _getUserData();
     _loadUserData();
+        _passwordController.addListener(() {
+      setState(() {});
+    });
   }
 
   @override
@@ -330,41 +337,57 @@ Future<void> _updatePasswordAndSetFlag(String newPassword) async {
     }
   }
 
-  Future<void> _uploadDriverPhoto(File imageFile) async {
-    final user = _auth.currentUser;
-    if (user == null) {
-      print('User is not authenticated.');
-      return;
-    }
-
-    try {
-      setState(() {
-        _loadingImage = true; // Set loading state while uploading
-      });
-
-      final storageReference =
-          FirebaseStorage.instance.ref().child('driver_photos/${user.uid}.jpg');
-      final uploadTask = storageReference.putFile(imageFile);
-
-      final TaskSnapshot taskSnapshot = await uploadTask.whenComplete(() {});
-      final photoUrl = await taskSnapshot.ref.getDownloadURL();
-
-      await _database
-          .child('driversAccount')
-          .child(user.uid)
-          .update({'driverPhoto': photoUrl});
-
-      setState(() {
-        _driverPhotoUrl = photoUrl;
-        _loadingImage = false; // Reset loading state after uploading
-      });
-    } catch (e) {
-      print('Error uploading driver photo: $e');
-      setState(() {
-        _loadingImage = false; // Reset loading state on error
-      });
-    }
+Future<void> _uploadDriverPhoto(File imageFile) async {
+  final user = _auth.currentUser;
+  if (user == null) {
+    print('User is not authenticated.');
+    return;
   }
+
+  try {
+    setState(() {
+      _loadingImage = true; // Set loading state while uploading
+    });
+
+    // Upload the image to Firebase Storage
+    final storageReference = FirebaseStorage.instance.ref().child('driver_photos/${user.uid}.jpg');
+    final uploadTask = storageReference.putFile(imageFile);
+
+    final TaskSnapshot taskSnapshot = await uploadTask;
+    final photoUrl = await taskSnapshot.ref.getDownloadURL();
+
+    // Get a reference to the driversAccount node
+    final driversRef = FirebaseDatabase.instance.ref().child('driversAccount');
+
+    // Query to find the node with matching uid
+    final driverSnapshot = await driversRef.orderByChild('uid').equalTo(user.uid).once();
+
+    if (driverSnapshot.snapshot.exists) {
+      // Since `equalTo` may return multiple results, ensure you get the correct path
+      final Map<dynamic, dynamic> driverData = driverSnapshot.snapshot.value as Map<dynamic, dynamic>;
+
+      driverData.forEach((key, value) async {
+        // Update the driverPhoto URL in the located node
+        await driversRef.child(key).update({'driverPhoto': photoUrl});
+        print('Updated driverPhoto in node: $key');
+      });
+    } else {
+      print('No matching driver found with UID: ${user.uid}');
+    }
+
+    setState(() {
+      _driverPhotoUrl = photoUrl;
+      _loadingImage = false; // Reset loading state after uploading
+    });
+  } catch (e) {
+    print('Error uploading driver photo: $e');
+    setState(() {
+      _loadingImage = false; // Reset loading state on error
+    });
+  }
+}
+
+
 
   void _showPermissionDeniedDialog() {
     showDialog(
@@ -490,7 +513,7 @@ Future<void> _logout() async {
               children: [
                 Container(
                   color: Color.fromARGB(255, 1, 42, 123),
-                  height: 70, // Blue background
+                  height: 90, // Blue background
                 ),
                 SingleChildScrollView(
                   padding: const EdgeInsets.all(30.0),
@@ -527,13 +550,6 @@ Future<void> _logout() async {
                                         width: 80,
                                         height: 80,
                                         fit: BoxFit.cover,
-                                        placeholder: (context, url) =>
-                                            Image.asset(
-                                          'assets/images/avatarman.png',
-                                          width: 80,
-                                          height: 80,
-                                          fit: BoxFit.cover,
-                                        ),
                                         errorWidget: (context, url, error) =>
                                             Image.asset(
                                           'assets/images/avatarman.png',
@@ -658,7 +674,7 @@ Container(
   child: TextField(
     controller: _birthdateController,
     enabled: false, // Disable editing
-    decoration: InputDecoration(
+    decoration: const InputDecoration(
       prefixIcon: Icon(Icons.cake, color: Colors.black), // Birthday icon with black color
       enabledBorder: OutlineInputBorder(
         borderSide: BorderSide(color: Colors.black), // Black border for enabled field
@@ -677,12 +693,6 @@ Container(
   ),
 ),
 
-SizedBox(height: 20),
-_buildTextField(
-  controller: _emailController,
-  icon: Icon(Icons.email), // Email icon
-  enabled: _isEditing, // Enable editing only if _isEditing is true
-),
 
 SizedBox(height: 20),
 _buildTextField(
@@ -690,6 +700,14 @@ _buildTextField(
   icon: Icon(Icons.phone), // Phone number icon
   enabled: _isEditing, // Enable editing only if _isEditing is true
 ),
+
+SizedBox(height: 20),
+_buildTextField(
+  controller: _emailController,
+  icon: Icon(Icons.email), // Email icon
+  enabled: _isEditing, // Enable editing only if _isEditing is true
+),
+
 
                   SizedBox(height: 20),
                   _buildPasswordField(), // Add password field
@@ -720,30 +738,51 @@ _buildTextField(
     );
   }
 
-Widget _buildPasswordField() {
-  return TextField(
-    controller: _passwordController,
-    enabled: _isEditing, // Only editable if _isEditing is true
-    obscureText: true, // To hide password input
-    style: TextStyle(color: Colors.black), // Ensure text stays black
-    decoration: InputDecoration(
-      prefixIcon: Icon(Icons.lock, color: Colors.black), // Black icon
-      enabledBorder: OutlineInputBorder(
-        borderSide: BorderSide(color: Colors.black), // Black border when enabled
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderSide: BorderSide(color: Colors.black, width: 2.0), // Black border when focused
-      ),
-      disabledBorder: OutlineInputBorder(
-        borderSide: BorderSide(color: Colors.black), // Black border when disabled
-      ),
-      border: OutlineInputBorder(
-        borderSide: BorderSide(color: Colors.black), // Default black border
-      ),
-    ),
-  );
-}
+    void _toggleObscureText() {
+    setState(() {
+      _obscureText = !_obscureText;
+    });
+  }
 
+  Widget _buildPasswordField() {
+    return TextField(
+      controller: _passwordController,
+      enabled: _isEditing, // Only editable if _isEditing is true
+      obscureText: _obscureText, // Toggle between obscure and visible text
+      style: const TextStyle(color: Colors.black), // Ensure text stays black
+      decoration: InputDecoration(
+        prefixIcon: const Icon(Icons.lock, color: Colors.black), // Black icon
+        hintText: _isEditing || _passwordController.text.isNotEmpty ? null : '••••••••', // Remove hint when editing or text is present
+        hintStyle: const TextStyle(
+          color: Colors.black, // Dots will be black
+        ),
+        enabledBorder: const OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.black), // Black border when enabled
+        ),
+        focusedBorder: const OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.black, width: 2.0), // Black border when focused
+        ),
+        disabledBorder: const OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.black), // Black border when disabled
+        ),
+        border: const OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.black), // Default black border
+        ),
+        suffixIcon: IconButton(
+          icon: Icon(
+            _obscureText ? Icons.visibility_off : Icons.visibility,
+            color: Colors.black, // Black icon color
+          ),
+          onPressed: _toggleObscureText, // Toggle visibility
+        ),
+      ),
+      onTap: () {
+        setState(() {
+          _isEditing = true; // Set editing state when user taps on the field
+        });
+      },
+    );
+  }
 
 // Reusable text field builder
 Widget _buildTextField({
