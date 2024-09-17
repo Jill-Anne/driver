@@ -57,7 +57,7 @@ body: Stack(
       right:10,
       child: Container(
         constraints: BoxConstraints(
-          maxHeight: 320, // Adjust this value to set the desired maximum height
+          maxHeight: 340, // Adjust this value to set the desired maximum height
         ),
         child: Card(
           color: Colors.white,

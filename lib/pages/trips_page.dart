@@ -12,7 +12,7 @@ class TripsPage extends StatefulWidget {
 
 class _TripsPageState extends State<TripsPage> {
   // Variable to track which tab is currently selected
-  int selectedIndex = 0;
+  int selectedIndex = 1; // Set default tab index to 1 (Pending Service)
 
   // Function to change the tab
   void onTabSelected(int index) {
@@ -21,25 +21,23 @@ class _TripsPageState extends State<TripsPage> {
     });
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      // appBar: AppBar(
-      //   title: Text('Trips'),
-      //   backgroundColor: Colors.deepPurple,
-      // ),
- 
-      body: Column(
-        
-        children: [
-          // Tab bar at the top that shows both tabs and highlights the selected one
-           SizedBox(height: 40),
-          Row(
+ @override
+Widget build(BuildContext context) {
+  return Scaffold(
+    body: Column(
+      children: [
+        // Add space at the top
+        SizedBox(height: 30),
+
+        // Tab bar with background color
+        Container(
+          height: 50,
+          color: Color(0xFFF2F8FC), // Set the background color of the tab bar
+          padding: const EdgeInsets.symmetric(vertical: 0), // Adjust padding as needed
+          child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-
-
-// Pending Booking Tab
+              // Pending Booking Tab
               GestureDetector(
                 onTap: () => onTabSelected(1),
                 child: Container(
@@ -64,7 +62,6 @@ class _TripsPageState extends State<TripsPage> {
               ),
 
               // Trip History Tab
-               
               GestureDetector(
                 onTap: () => onTabSelected(0),
                 child: Container(
@@ -89,19 +86,19 @@ class _TripsPageState extends State<TripsPage> {
               ),
 
               SizedBox(width: 20), // Space between the two tabs
-
-              
             ],
           ),
+        ),
 
-          // Content changes based on selected tab
-          Expanded(
-            child: selectedIndex == 0
-                ? TripsHistoryPage() // Show Trip History content
-                : NewAdvanceBooking(), // Show Pending Booking content
-          ),
-        ],
-      ),
-    );
-  }
+        // Content changes based on selected tab
+        Expanded(
+          child: selectedIndex == 0
+              ? TripsHistoryPage() // Show Trip History content
+              : NewAdvanceBooking(), // Show Pending Booking content
+        ),
+      ],
+    ),
+  );
+}
+
 }

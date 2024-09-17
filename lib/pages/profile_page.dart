@@ -245,32 +245,66 @@ Future<String> _showCurrentPasswordDialog() async {
       final TextEditingController _currentPasswordController = TextEditingController();
 
       return AlertDialog(
-        title: Text(
-          'Re-enter Current Password',
-          style: TextStyle(color: Colors.black),
+        shape: RoundedRectangleBorder(
+          side: BorderSide(color: Colors.black, width: 1), // Black outline border for dialog
+          borderRadius: BorderRadius.circular(8),
         ),
-        content: TextField(
-          controller: _currentPasswordController,
-          obscureText: true,
-          decoration: InputDecoration(
-            labelText: 'Current Password',
-            labelStyle: TextStyle(color: Colors.black),
-            focusedBorder: UnderlineInputBorder(
-              borderSide: BorderSide(color: Colors.black),
-            ),
+        title: const Center( // Center the title
+          child: Text(
+            'Re-enter Current Password',
+            style: TextStyle(color: Color.fromARGB(255, 1, 42, 123), fontSize: 18, fontWeight: FontWeight.bold),
           ),
-          style: TextStyle(color: Colors.black),
+        ),
+
+        content: Container(
+          
+          height: 90, // Adjust this value to change the height of the dialog
+          child: Column(
+            
+            mainAxisSize: MainAxisSize.min,
+            
+            children: [
+               SizedBox(height: 20), 
+              TextField(
+                controller: _currentPasswordController,
+                obscureText: true,
+                decoration: InputDecoration(
+                  labelText: 'Birthdate',
+                  labelStyle: TextStyle(color: Colors.black),
+                  focusedBorder: OutlineInputBorder( // Outline box for input field
+                    borderSide: BorderSide(color: Colors.black),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  enabledBorder: OutlineInputBorder( // Default outline when not focused
+                    borderSide: BorderSide(color: Colors.black),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                style: TextStyle(color: Colors.black),
+              ),
+            ],
+          ),
         ),
         actions: <Widget>[
-          TextButton(
-            onPressed: () {
-              currentPassword = _currentPasswordController.text;
-              print('Current password entered in dialog: $currentPassword');
-              Navigator.of(context).pop();
-            },
-            child: Text(
-              'OK',
-              style: TextStyle(color: Colors.black),
+          Center( // Center the button
+            child: Container(  // Box for the button with background color
+              height: 50, // Adjust height
+              width: 150, // Adjust width
+              decoration: BoxDecoration(
+                color: Color.fromARGB(255, 1, 42, 123), // Background color
+                borderRadius: BorderRadius.circular(8), // Rounded corners
+              ),
+              child: TextButton(
+                onPressed: () {
+                  currentPassword = _currentPasswordController.text;
+                  print('Current password entered in dialog: $currentPassword');
+                  Navigator.of(context).pop();
+                },
+                child: const Text(
+                  'Confirm',
+                  style: TextStyle(color:Colors.white,  fontSize: 18, ),
+                ),
+              ),
             ),
           ),
         ],
@@ -456,287 +490,273 @@ Future<void> _logout() async {
 }
 
 
-  @override
-  Widget build(BuildContext context) {
-    // Set the status bar color to transparent
-    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
-    ));
+ @override
+Widget build(BuildContext context) {
+  // Set the status bar color to transparent
+  SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    statusBarIconBrightness: Brightness.dark,
+  ));
 
-    return Scaffold(
-      body: Column(
-        children: [
-          Container(
-            color: Colors.white,
-            height: 60,
-            padding: const EdgeInsets.only(
-              left: 13.0,
-              right: 0,
-              top: 20.0,
-              bottom: 0,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                if (_isEditing) // Show the X icon when editing
-                  IconButton(
-                    icon: const Icon(Icons.close, color: Colors.black54),
-                    onPressed: () {
-                      setState(() {
-                        _isEditing = false; // Exit edit mode without saving
-                      });
-                    },
-                  ),
-                if (_isEditing) // Show the save button when editing
-                  TextButton(
-                    onPressed: () {
-                      _updateUserData();
-                      setState(() {
-                        _isEditing = false; // Exit edit mode after saving
-                      });
-                    },
-                    child: const Text(
-                      'Save',
-                      style: TextStyle(
-                        color: Colors.black54,
-                        fontSize: 15,
-                        fontWeight: FontWeight.normal,
-                      ),
+  return Scaffold(
+    resizeToAvoidBottomInset: true, // Allow resizing to accommodate the keyboard
+    body: Column(
+      children: [
+        Container(
+          color: Colors.white,
+          height: 60,
+          padding: const EdgeInsets.only(
+            left: 13.0,
+            right: 0,
+            top: 20.0,
+            bottom: 0,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              if (_isEditing) // Show the X icon when editing
+                IconButton(
+                  icon: const Icon(Icons.close, color: Colors.black54),
+                  onPressed: () {
+                    setState(() {
+                      _isEditing = false; // Exit edit mode without saving
+                    });
+                  },
+                ),
+              if (_isEditing) // Show the save button when editing
+                TextButton(
+                  onPressed: () {
+                    _updateUserData();
+                    setState(() {
+                      _isEditing = false; // Exit edit mode after saving
+                    });
+                  },
+                  child: const Text(
+                    'Save',
+                    style: TextStyle(
+                      color: Colors.black54,
+                      fontSize: 15,
+                      fontWeight: FontWeight.normal,
                     ),
                   ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: Stack(
-              children: [
-                Container(
-                  color: Color.fromARGB(255, 1, 42, 123),
-                  height: 90, // Blue background
                 ),
-                SingleChildScrollView(
-                  padding: const EdgeInsets.all(30.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(height: 0), // Space to position image
-                      Center(
-                        child: Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            Container(
-                              width: 105,
-                              height: 105,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: const Color.fromARGB(255, 32, 2, 87),
-                                  width: 4,
-                                ),
-                              ),
-                              child: ClipOval(
-                                child: _imageFile != null
-                                    ? Image.file(
-                                        _imageFile!,
-                                        width: 80,
-                                        height: 80,
-                                        fit: BoxFit.cover,
-                                      )
-                                    : CachedNetworkImage(
-                                        imageUrl: _driverPhotoUrl ??
-                                            "https://firebasestorage.googleapis.com/v0/b/driver-test-ef6fc.appspot.com/o/driver_photos%2Fdefault.jpg?alt=media",
-                                        width: 80,
-                                        height: 80,
-                                        fit: BoxFit.cover,
-                                        errorWidget: (context, url, error) =>
-                                            Image.asset(
-                                          'assets/images/avatarman.png',
-                                          width: 80,
-                                          height: 80,
-                                          fit: BoxFit.cover,
-                                        ),
-                                      ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: Stack(
+            children: [
+              Container(
+                color: Color.fromARGB(255, 1, 42, 123),
+                height: 90, // Blue background
+              ),
+              SingleChildScrollView(
+                padding: const EdgeInsets.all(30.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(height: 0), // Space to position image
+                    Center(
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Container(
+                            width: 105,
+                            height: 105,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: const Color.fromARGB(255, 32, 2, 87),
+                                width: 4,
                               ),
                             ),
-                            Positioned(
-                              bottom:
-                                  -10, // Adjust to move the icon up slightly
-                              right: -9,
-                              child: GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    if (_isEditing) {
-                                      _pickImage();
-                                    }
-                                    _isEditing =
-                                        !_isEditing; // Toggle edit mode
-                                  });
-                                },
-                                child: Container(
-                                  padding: const EdgeInsets.all(8.0),
-                                  decoration: BoxDecoration(
-                                    color:
-                                        const Color.fromARGB(255, 1, 42, 123),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Icon(
-                                    _isEditing
-                                        ? Icons.camera_alt
-                                        : Icons
-                                            .edit, // Change icon based on state
-                                    color: Colors.white,
-                                  ),
+                            child: ClipOval(
+                              child: _imageFile != null
+                                  ? Image.file(
+                                      _imageFile!,
+                                      width: 80,
+                                      height: 80,
+                                      fit: BoxFit.cover,
+                                    )
+                                  : CachedNetworkImage(
+                                      imageUrl: _driverPhotoUrl ??
+                                          "https://firebasestorage.googleapis.com/v0/b/driver-test-ef6fc.appspot.com/o/driver_photos%2Fdefault.jpg?alt=media",
+                                      width: 80,
+                                      height: 80,
+                                      fit: BoxFit.cover,
+                                      errorWidget: (context, url, error) =>
+                                          Image.asset(
+                                        'assets/images/avatarman.png',
+                                        width: 80,
+                                        height: 80,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: -10, // Adjust to move the icon up slightly
+                            right: -9,
+                            child: GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  if (_isEditing) {
+                                    _pickImage();
+                                  }
+                                  _isEditing = !_isEditing; // Toggle edit mode
+                                });
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(8.0),
+                                decoration: BoxDecoration(
+                                  color: const Color.fromARGB(255, 1, 42, 123),
+                                  shape: BoxShape.circle,
                                 ),
+                                child: Icon(
+                                  _isEditing
+                                      ? Icons.camera_alt
+                                      : Icons.edit, // Change icon based on state
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 10),
+                    Center(
+                      child: RichText(
+                        textAlign: TextAlign.center,
+                        text: TextSpan(
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.black,
+                          ),
+                          children: [
+                            TextSpan(
+                              text: '${_fullNameController.text}\n',
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            WidgetSpan(
+                              child: SizedBox(height: 20), // Add spacing between lines
+                            ),
+                            TextSpan(
+                              text: 'ID #: ${_idNumberController.text} ',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Colors.black54,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            WidgetSpan(
+                              child: SizedBox(width: 2), // Adjust spacing
+                            ),
+                            TextSpan(
+                              text: 'BODY #: ${_bodyNumberController.text}',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Colors.black54,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
                           ],
                         ),
                       ),
-                      SizedBox(height: 10),
-
-                      Center(
-                        child: RichText(
-                          textAlign: TextAlign.center,
-                          text: TextSpan(
+                    ),
+                    Center(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          ...getStarRating(_averageRating),
+                          const SizedBox(width: 6),
+                          Text(
+                            _averageRating.toStringAsFixed(2),
                             style: const TextStyle(
                               fontSize: 16,
-                              color: Colors.black,
-                            ),
-                            children: [
-                              TextSpan(
-                                text: '${_fullNameController.text}\n',
-                                style: const TextStyle(
-                                  fontSize:
-                                      20, // Different font size for the name
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                              WidgetSpan(
-                                child: SizedBox(
-                                    height: 20), // Add spacing between lines
-                              ),
-                              TextSpan(
-                                text: 'ID #: ${_idNumberController.text} ',
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.black54,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              WidgetSpan(
-                                child: SizedBox(
-                                    width:
-                                        2), // Adjust the width to your preference for spacing
-                              ),
-                              TextSpan(
-                                text: 'BODY #: ${_bodyNumberController.text}',
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.black54,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-
-                      Center(
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            // Star rating widgets
-                            ...getStarRating(_averageRating),
-                            const SizedBox(
-                                width:
-                                    6), // Add space between stars and rating text
-                            // Rating text
-                            Text(
-                              _averageRating.toStringAsFixed(2),
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black54,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                    
-SizedBox(height: 40),
-Container(
-  //width: 700.0,
-  padding: EdgeInsets.symmetric(horizontal: 0), // Add padding to match the text field's appearance
-  child: TextField(
-    controller: _birthdateController,
-    enabled: false, // Disable editing
-    decoration: const InputDecoration(
-      prefixIcon: Icon(Icons.cake, color: Colors.black), // Birthday icon with black color
-      enabledBorder: OutlineInputBorder(
-        borderSide: BorderSide(color: Colors.black), // Black border for enabled field
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderSide: BorderSide(color: Colors.black, width: 2.0), // Black border when focused
-      ),
-      disabledBorder: OutlineInputBorder(
-        borderSide: BorderSide(color: Colors.black), // Black border when disabled
-      ),
-      border: OutlineInputBorder(
-        borderSide: BorderSide(color: Colors.black), // Default black border
-      ),
-    ),
-    style: TextStyle(color: Colors.black), // Ensure the text remains black
-  ),
-),
-
-
-SizedBox(height: 20),
-_buildTextField(
-  controller: _phoneNumberController,
-  icon: Icon(Icons.phone), // Phone number icon
-  enabled: _isEditing, // Enable editing only if _isEditing is true
-),
-
-SizedBox(height: 20),
-_buildTextField(
-  controller: _emailController,
-  icon: Icon(Icons.email), // Email icon
-  enabled: _isEditing, // Enable editing only if _isEditing is true
-),
-
-
-                  SizedBox(height: 20),
-                  _buildPasswordField(), // Add password field
-
-
-                      SizedBox(height: 10),
-                      Center(
-                        child: TextButton(
-                          onPressed: _logout,
-                          child: Text(
-                            'Logout',
-                            style: TextStyle(
-                              color: Colors.black54,
-                              fontSize: 21,
                               fontWeight: FontWeight.bold,
+                              color: Colors.black54,
                             ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 40),
+                    _buildInputField(), // Input fields
+                    SizedBox(height: 10),
+                    Center(
+                      child: TextButton(
+                        onPressed: _logout,
+                        child: Text(
+                          'Logout',
+                          style: TextStyle(
+                            color: Colors.black54,
+                            fontSize: 21,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _buildInputField() {
+  return Column(
+    children: [
+      Container(
+        padding: EdgeInsets.symmetric(horizontal: 0),
+        child: TextField(
+          controller: _birthdateController,
+          enabled: false,
+          decoration: InputDecoration(
+            prefixIcon: Icon(Icons.cake, color: Colors.black),
+            enabledBorder: OutlineInputBorder(
+              borderSide: BorderSide(color: Colors.black),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderSide: BorderSide(color: Colors.black, width: 2.0),
+            ),
+            disabledBorder: OutlineInputBorder(
+              borderSide: BorderSide(color: Colors.black),
+            ),
+            border: OutlineInputBorder(
+              borderSide: BorderSide(color: Colors.black),
             ),
           ),
-        ],
+          style: TextStyle(color: Colors.black),
+        ),
       ),
-    );
-  }
+      SizedBox(height: 20),
+      _buildTextField(
+        controller: _phoneNumberController,
+        icon: Icon(Icons.phone),
+        enabled: _isEditing,
+      ),
+      SizedBox(height: 20),
+      _buildTextField(
+        controller: _emailController,
+        icon: Icon(Icons.email),
+        enabled: _isEditing,
+      ),
+      SizedBox(height: 20),
+      _buildPasswordField(),
+    ],
+  );
+}
+
 
     void _toggleObscureText() {
     setState(() {
