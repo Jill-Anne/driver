@@ -554,13 +554,32 @@ const SizedBox(height: 9,),
                               ),
                             );
                           },
-                          child: const Padding(
-                            padding: EdgeInsets.only(right: 10),
-                            child: Icon(
-                              Icons.phone_android_outlined,
-                              color: Color(0x662E3192),
-                            ),
-                          ),
+                          child: Padding(
+  padding: const EdgeInsets.only(right: 10),
+  child: Stack(
+    alignment: Alignment.center,
+    children: [
+      // Container(
+      //   height: 35,
+      //   width: 35,
+      //   decoration: BoxDecoration(
+      //     borderRadius: const BorderRadius.all(
+      //       Radius.circular(25),
+      //     ),
+      //     border: Border.all(
+      //       width: 2,
+      //       color: const Color(0xFF2E3192),
+      //     ),
+      //   ),
+      // ),
+      const Icon(
+        Icons.phone,
+        color: Color.fromARGB(255, 21, 20, 20),
+      ),
+    ],
+  ),
+),
+
                         ),
 
                       ],
@@ -629,7 +648,7 @@ const SizedBox(width: 8), // Add space between image and text
 
                     
 
-                    const SizedBox(height: 25,),
+                    const SizedBox(height: 20,),
 
                    Center(
   child: ElevatedButton(

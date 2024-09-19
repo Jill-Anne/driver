@@ -116,14 +116,13 @@ bool _isPasswordSet = false; // Ensure this is defined
     }
   }
 
-  Future<void> _loadUserData() async {
-    Map<String, dynamic> userData = await retrieveUserData();
-    setState(() {
-      _averageRating = userData['totalRatings']['averageRating'] ??
-          0.0; // Ensure you access the correct field
-      _isLoading = false; // Set loading to false once data is fetched
-    });
-  }
+Future<void> _loadUserData() async {
+  Map<String, dynamic> userData = await retrieveUserData();
+  setState(() {
+    _averageRating = userData['totalRatings']?['averageRating']?.toDouble() ?? 0.0;
+    _isLoading = false;
+  });
+}
 
   
 
