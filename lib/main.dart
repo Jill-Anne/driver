@@ -10,6 +10,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:driver/authentication/login_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:timezone/data/latest.dart' as tz;
 
@@ -99,6 +100,12 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+      // Set the status bar color to transparent
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    statusBarColor: Color.fromARGB(255, 1, 42, 123),//Colors.transparent,
+    statusBarIconBrightness: Brightness.light,
+  ));
+
     return MaterialApp(
       title: 'DriversApp',
       debugShowCheckedModeBanner: false,

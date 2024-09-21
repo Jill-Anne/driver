@@ -131,64 +131,67 @@ Widget build(BuildContext context) {
                   ),
                 );
               }
+// Group trips by date
+Map<String, List<Map>> groupedTrips = {};
+for (var trip in tripsList) {
+  if (trip["status"] == "ended" &&
+      trip["driverID"] == FirebaseAuth.instance.currentUser!.uid) {
+    if (trip["tripEndedTime"] != null) {
+      try {
+        DateFormat dateFormat = DateFormat("MMMM d, yyyy h:mm a");
+        DateTime tripEndedDateTime = dateFormat.parse(trip["tripEndedTime"]);
+        String formattedDate = DateFormat('MMM d, yyyy').format(tripEndedDateTime); // Changed format
+        if (!groupedTrips.containsKey(formattedDate)) {
+          groupedTrips[formattedDate] = [];
+        }
+        groupedTrips[formattedDate]!.add(trip);
+      } catch (e) {
+        print("Date parsing error: $e");
+      }
+    }
+  }
+}
 
-              // Group trips by date
-              Map<String, List<Map>> groupedTrips = {};
-              for (var trip in tripsList) {
-                if (trip["status"] == "ended" &&
-                    trip["driverID"] == FirebaseAuth.instance.currentUser!.uid) {
-                  if (trip["tripEndedTime"] != null) {
-                    try {
-                      DateFormat dateFormat = DateFormat("MMMM d, yyyy h:mm a");
-                      DateTime tripEndedDateTime = dateFormat.parse(trip["tripEndedTime"]);
-                      String formattedDate = DateFormat('MM/dd/yyyy').format(tripEndedDateTime);
-                      if (!groupedTrips.containsKey(formattedDate)) {
-                        groupedTrips[formattedDate] = [];
-                      }
-                      groupedTrips[formattedDate]!.add(trip);
-                    } catch (e) {
-                      print("Date parsing error: $e");
-                    }
-                  }
-                }
-              }
+// Sort the dates in descending order
+List<String> sortedDates = groupedTrips.keys.toList()
+  ..sort((a, b) => DateFormat('MMM d, yyyy').parse(b).compareTo(DateFormat('MMM d, yyyy').parse(a)));
 
-              // Sort the dates in descending order
-              List<String> sortedDates = groupedTrips.keys.toList()
-                ..sort((a, b) => DateFormat('MM/dd/yyyy').parse(b).compareTo(DateFormat('MM/dd/yyyy').parse(a)));
-              return ListView.builder(
-                shrinkWrap: true,
-                itemCount: sortedDates.length,
-                itemBuilder: (context, dateIndex) {
-                  String date = sortedDates[dateIndex];
-                  List<Map> tripsForDate = groupedTrips[date]!;
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(left: 15, bottom: 4),
-                        ///DISPLAY OF DATE 
-                        child: Text(
-                          '$date ',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                           color: Color.fromARGB(255, 1, 42, 123),
-                          ),
-                        ),
-                      ),
-                      ...tripsForDate.map((trip) {
-                        String tripEndedTimeFormatted = "N/A";
-                        if (trip["tripEndedTime"] != null) {
-                          try {
-                            DateFormat dateFormat = DateFormat("MMMM d, yyyy h:mm a");
-                            DateTime tripEndedDateTime = dateFormat.parse(trip["tripEndedTime"]);
-                            tripEndedTimeFormatted = DateFormat('MMMM d, yyyy h:mm a').format(tripEndedDateTime);
-                          } catch (e) {
-                            tripEndedTimeFormatted = "Invalid date format";
-                            print("Date parsing error: $e");
-                          }
-                        }
+return ListView.builder(
+  shrinkWrap: true,
+  itemCount: sortedDates.length,
+  itemBuilder: (context, dateIndex) {
+    String date = sortedDates[dateIndex];
+    List<Map> tripsForDate = groupedTrips[date]!;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 15, bottom: 4),
+          /// DISPLAY OF DATE 
+          child: Text(
+            date,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: Color.fromARGB(255, 1, 42, 123),
+            ),
+          ),
+        ),
+        ...tripsForDate.map((trip) {
+          String tripEndedTimeFormatted = "N/A";
+          if (trip["tripEndedTime"] != null) {
+            try {
+              DateFormat dateFormat = DateFormat("MMMM d, yyyy h:mm a");
+              DateTime tripEndedDateTime = dateFormat.parse(trip["tripEndedTime"]);
+              tripEndedTimeFormatted = DateFormat('MMM d, yyyy h:mm a').format(tripEndedDateTime); // Changed format
+            } catch (e) {
+              tripEndedTimeFormatted = "Invalid date format";
+              print("Date parsing error: $e");
+            }
+          }
+
+          
+
 
                         return Column(
                           children: [

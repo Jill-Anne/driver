@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:driver/models/trip_details.dart';
+import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -49,23 +50,29 @@ class _AdvanceBookingState extends State<AdvanceBooking> {
 
   @override
   Widget build(BuildContext context) {
+      // Set the status bar color to transparent
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    statusBarColor: Color.fromARGB(255, 1, 42, 123),//Colors.transparent,
+    statusBarIconBrightness: Brightness.light,
+  ));
+
 return Scaffold(
   appBar: AppBar(
     title: const Align(
-      alignment: Alignment.center, // Center the title within the AppBar
+      alignment: Alignment.topLeft, // Center the title within the AppBar
       child: Padding(
         padding: EdgeInsets.only(top: 16.0), // Add margin above the title
         child: Text(
           'Service Requests',
           style: TextStyle(
-            color: Color.fromARGB(255, 1, 42, 123),
+            color: Colors.white,
             fontWeight: FontWeight.bold,
             fontSize: 20, // You can adjust the font size as needed
           ),
         ),
       ),
     ),
-    backgroundColor: Colors.white, // You can set the AppBar background color if needed
+    backgroundColor: Color.fromARGB(255, 1, 42, 123), // You can set the AppBar background color if needed
   ),
 
       body: StreamBuilder<QuerySnapshot>(
