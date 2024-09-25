@@ -2,6 +2,7 @@ import 'package:driver/TripHistory.dart/FullTripHistoryInfo.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart'; // Import intl package for date formatting
 class TripsHistoryPage extends StatefulWidget {
   const TripsHistoryPage({super.key});
@@ -47,7 +48,10 @@ class _TripsHistoryPageState extends State<TripsHistoryPage> {
   void initState() {
     // TODO: implement initState
     super.initState();
-
+SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+      statusBarColor: Color.fromARGB(255, 1, 42, 123),
+      statusBarIconBrightness: Brightness.light,
+    ));
     getCurrentDriverTotalNumberOfTripsCompleted();
   }
 

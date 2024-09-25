@@ -1,3 +1,4 @@
+/*
 import 'package:driver/pages/advance_booking_pending.dart';
 import 'package:driver/pages/new_advance_booking_pending.dart';
 import 'package:driver/TripHistory.dart/trips_history_page.dart';
@@ -261,3 +262,4 @@ class _TripsPageState extends State<TripsPage> {
     );
   }
 }
+*/

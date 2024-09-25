@@ -10,11 +10,18 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:driver/authentication/login_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:timezone/data/latest.dart' as tz;
 
 void main() async {
+        // Set the status bar color to transparent
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    statusBarColor: Color.fromARGB(255, 1, 42, 123),//Colors.transparent,
+    statusBarIconBrightness: Brightness.light,
+  ));
+//debugPaintSizeEnabled = true; // Enable size debugging
   WidgetsFlutterBinding.ensureInitialized();
   
   log('Initializing Firebase...');
@@ -100,28 +107,22 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-      // Set the status bar color to transparent
-  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-    statusBarColor: Color.fromARGB(255, 1, 42, 123),//Colors.transparent,
-    statusBarIconBrightness: Brightness.light,
-  ));
 
     return MaterialApp(
       title: 'DriversApp',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        // Ensure all elements are using the correct colors
-        scaffoldBackgroundColor: Colors.white, // Set background color for Scaffold
-        appBarTheme: AppBarTheme(
-          backgroundColor: Colors.white, // Set AppBar background color
-          foregroundColor: Colors.black, // Set AppBar text color
-        ), // Set default background color
-        useMaterial3: true, colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.white, // Set seed color to white
-          primary: Colors.white,
-          secondary: Colors.white,
-        ).copyWith(background: Colors.white),
-      ),
+theme: ThemeData(
+  scaffoldBackgroundColor: Colors.white, // Set Scaffold background color
+  appBarTheme: const AppBarTheme(
+    backgroundColor: Color.fromARGB(255, 1, 42, 123), // AppBar background color
+    foregroundColor: Colors.white, // AppBar text color
+    systemOverlayStyle: SystemUiOverlayStyle(
+      statusBarColor: Color.fromARGB(255, 1, 42, 123), // Status bar color
+      statusBarIconBrightness: Brightness.light, // Status bar icon brightness
+    ),
+  ),
+),
+
       home: FutureBuilder(
         // Check if the user is authenticated
         future: FirebaseAuth.instance.authStateChanges().first,

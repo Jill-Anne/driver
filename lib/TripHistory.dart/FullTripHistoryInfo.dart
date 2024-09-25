@@ -1,11 +1,13 @@
 import 'package:driver/reusable_widgets.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart'; // Import intl package for date formatting
 
 class TripDetailsPage extends StatelessWidget {
   final Map tripDetails;
 
   const TripDetailsPage({super.key, required this.tripDetails});
+  
 
   @override
   Widget build(BuildContext context) {
