@@ -30,3 +30,12 @@ String driverPhoto = "";
 String carColor = "";
 String carModel = "";
 String carNumber = "";
+
+
+
+
+String currentTripID = ""; // Global variable for storing the trip ID
+void setTripID(String tripID) {
+  currentTripID = tripID; // Update the global trip ID variable
+  print("setTripID called with: $tripID"); // Print the incoming trip ID
+}

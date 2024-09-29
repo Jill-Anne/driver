@@ -46,6 +46,10 @@ class _NewTripPageState extends State<NewTripPage>
   String buttonTitleText = "ARRIVED";
   Color buttonColor = Colors.indigoAccent;
   CommonMethods cMethods = CommonMethods();
+   Future<double>? fareAmountFuture;
+
+
+
 
   makeMarker()
   {
@@ -60,6 +64,7 @@ class _NewTripPageState extends State<NewTripPage>
       });
     }
   }
+
 
   obtainDirectionAndDrawRoute(sourceLocationLatLng, destinationLocationLatLng) async
   {
@@ -273,20 +278,41 @@ class _NewTripPageState extends State<NewTripPage>
       builder: (BuildContext context) => LoadingDialog(messageText: 'Please wait...',),
     );
 
-    var driverCurrentLocationLatLng = LatLng(driverCurrentPosition!.latitude, driverCurrentPosition!.longitude);
+// Create LatLng for driver's current location
+var driverCurrentLocationLatLng = LatLng(driverCurrentPosition!.latitude, driverCurrentPosition!.longitude);
 
-    var directionDetailsEndTripInfo = await CommonMethods.getDirectionDetailsFromAPI(
-        widget.newTripDetailsInfo!.pickUpLatLng!, //pickup
-        driverCurrentLocationLatLng, //destination
-    );
+// Print driver's current location
+print('Driver Current Location: ${driverCurrentLocationLatLng.latitude}, ${driverCurrentLocationLatLng.longitude}');
+
+// Get direction details from API
+var directionDetailsEndTripInfo = await CommonMethods.getDirectionDetailsFromAPI(
+    widget.newTripDetailsInfo!.pickUpLatLng!, // pickup
+    widget.newTripDetailsInfo!.dropOffLatLng! // drop-off
+);
+
+
+// Print direction details
+if (directionDetailsEndTripInfo != null) {
+    print('Direction Details:');
+    print('Distance: ${directionDetailsEndTripInfo.distanceTextString}');
+    print('Duration: ${directionDetailsEndTripInfo.durationTextString}');
+} else {
+    print('Failed to retrieve direction details.');
+}
+
 
     Navigator.pop(context);
 
-    String fareAmount = (cMethods.calculateFareAmount(directionDetailsEndTripInfo!)).toString();
+    String fareAmount = (await cMethods.calculateFareAmount(directionDetailsEndTripInfo!)).toString();
+print('Calculated fareAmount: $fareAmount');
 
-    await FirebaseDatabase.instance.ref().child("tripRequests")
-        .child(widget.newTripDetailsInfo!.tripID!)
-        .child("fareAmount").set(fareAmount);
+
+    await FirebaseDatabase.instance.ref()
+    .child("tripRequests")
+    .child(widget.newTripDetailsInfo!.tripID!)
+    .child("fareAmount")
+    .set(fareAmount);
+print('Fare amount saved in Firebase: $fareAmount');
 
     await FirebaseDatabase.instance.ref().child("tripRequests")
         .child(widget.newTripDetailsInfo!.tripID!)
@@ -303,11 +329,13 @@ class _NewTripPageState extends State<NewTripPage>
 
   displayPaymentDialog(fareAmount)
   {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) => PaymentDialog(fareAmount: fareAmount, tripID: '', amount: '',),
-    );
+   showDialog(
+  context: context,
+  builder: (context) => PaymentDialog(
+    fareAmount: fareAmount, tripID: '', amount: '',
+    
+  ),
+);
   }
 
   // saveFareAmountToDriverTotalEarnings(String fareAmount) async

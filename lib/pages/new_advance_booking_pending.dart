@@ -25,7 +25,7 @@ class _NewAdvanceBookingState extends State<NewAdvanceBooking> {
   void initState() {
     super.initState();
     _getUserData();
-  //  _checkExpiredBookings(); // Check for expired bookings on init
+    _checkExpiredBookings(); // Check for expired bookings on init
    // Set the System UI overlay style when this tab is created
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
       statusBarColor: Color.fromARGB(255, 1, 42, 123),
@@ -50,7 +50,7 @@ class _NewAdvanceBookingState extends State<NewAdvanceBooking> {
     }
   }
 
-/*
+
 void _checkExpiredBookings() async {
   final now = DateTime.now();
   final snapshot = await FirebaseFirestore.instance
@@ -88,7 +88,7 @@ void _checkExpiredBookings() async {
     }
   }
 }
-*/
+
 
 @override
 Widget build(BuildContext context) {
@@ -96,111 +96,15 @@ Widget build(BuildContext context) {
     statusBarColor: Color.fromARGB(255, 1, 42, 123),
     statusBarIconBrightness: Brightness.light,
   ));
-
-  return Scaffold(
-    backgroundColor: Color.fromARGB(247, 245, 245, 245), // Set your preferred background color
+return Scaffold(
+    backgroundColor: Color.fromARGB(247, 245, 245, 245),
     body: Stack(
       children: [
-// StreamBuilder for Pending Service
-StreamBuilder<QuerySnapshot>(
-  stream: FirebaseFirestore.instance
-      .collection('Advance Bookings')
-      .where('status', whereIn: ['Completed', 'Accepted', 'Active'])
-      .snapshots(),
-  builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-    if (snapshot.hasError) {
-      return const Center(child: Text('Error occurred'));
-    }
-    if (snapshot.connectionState == ConnectionState.waiting) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    final data = snapshot.requireData;
-    if (data.docs.isEmpty) {
-      return const Center(child: Text('No Pending Service Request'));
-    }
-
-    // Group trips by start date for Pending Service
-    Map<String, List<DocumentSnapshot>> groupedTrips = {};
-
-    for (var trip in data.docs) {
-      DateTime startDate = trip['date'].toDate();
-      DateTime endDate = trip['dateto'].toDate();
-      String formattedDate = DateFormat('MMM d, yyyy').format(startDate);
-
-      // Check if the end date is before the current date
-      DateTime currentDate = DateTime.now();
-      if (endDate.isBefore(currentDate)) {
-        continue; // Skip trips that have ended
-      }
-
-      // Check the 'dates' array for active status
-      List<dynamic> datesArray = trip['dates'];
-      bool hasActiveDates = datesArray.any((dateItem) => dateItem['status'] == 'active');
-
-      // Include trips with 'Completed' status or those with active dates
-      if (trip['status'] == 'Completed' || hasActiveDates) {
-        // Create the entry in the groupedTrips map
-        if (!groupedTrips.containsKey(formattedDate)) {
-          groupedTrips[formattedDate] = [];
-        }
-        groupedTrips[formattedDate]!.add(trip);
-      }
-    }
-
-    // Combine dates and trips into a single list for Pending Service
-    List<dynamic> combinedList = [];
-    for (var dateKey in groupedTrips.keys) {
-      combinedList.add(dateKey); // Add the date header
-      combinedList.addAll(groupedTrips[dateKey]!); // Add trips for this date
-    }
-
-    // Use ListView.builder for Pending Service
-    return ListView.builder(
-      itemCount: combinedList.length,
-      itemBuilder: (context, index) {
-        final item = combinedList[index];
-
-        if (item is String) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-            child: Text(
-              item,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: Color.fromARGB(255, 1, 42, 123),
-              ),
-            ),
-          );
-        } else {
-          // Render the list tile and divider only if the trip is active
-          if (item['dateto'].toDate().isAfter(DateTime.now())) {
-            return Column(
-              children: [
-                _buildListTile(item, context), // Build the list tile for active trips
-                Center(
-                  child: Container(
-                    width: 310,
-                    child: Divider(height: 1, thickness: 2, color: Colors.grey[400]),
-                  ),
-                ),
-              ],
-            );
-          } else {
-            return const SizedBox.shrink(); // Return nothing if the trip has ended
-          }
-        }
-      },
-    );
-  },
-),
-
-        /* StreamBuilder for Completed Service
+        // StreamBuilder for Pending Service
         StreamBuilder<QuerySnapshot>(
           stream: FirebaseFirestore.instance
               .collection('Advance Bookings')
-              .where('status', isEqualTo: 'Completed')
+              .where('status', whereIn: ['Completed', 'Accepted', 'Active'])
               .snapshots(),
           builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
             if (snapshot.hasError) {
@@ -212,63 +116,73 @@ StreamBuilder<QuerySnapshot>(
 
             final data = snapshot.requireData;
             if (data.docs.isEmpty) {
-              return const Center(child: Text('No Completed Service Request'));
+              return const Center(child: Text('No Pending Service Request'));
             }
 
-            // Group trips by start date for Completed Service
-            Map<String, List<DocumentSnapshot>> completedGroupedTrips = {};
+            // Group trips by start date for Pending Service
+            Map<String, List<DocumentSnapshot>> groupedTrips = {};
+
             for (var trip in data.docs) {
               DateTime startDate = trip['date'].toDate();
+              DateTime endDate = trip['dateto'].toDate();
               String formattedDate = DateFormat('MMM d, yyyy').format(startDate);
-              if (!completedGroupedTrips.containsKey(formattedDate)) {
-                completedGroupedTrips[formattedDate] = [];
+              DateTime currentDate = DateTime.now();
+
+              // Skip trips that have ended
+              if (endDate.isBefore(currentDate)) {
+                continue;
               }
-              completedGroupedTrips[formattedDate]!.add(trip);
-            }
 
-            // Combine dates and trips into a single list for Completed Service
-            List<dynamic> completedCombinedList = [];
-            for (var dateKey in completedGroupedTrips.keys) {
-              completedCombinedList.add(dateKey); // Add the date header
-              completedCombinedList.addAll(completedGroupedTrips[dateKey]!); // Add trips for this date
-            }
+              // Check the 'dates' array for active status
+              List<dynamic> datesArray = trip['dates'];
+              bool hasActiveDates = datesArray.any((dateItem) => dateItem['status'] == 'active');
 
-            // Use ListView.builder for Completed Service
-            return ListView.builder(
-              itemCount: completedCombinedList.length,
-              itemBuilder: (context, index) {
-                final item = completedCombinedList[index];
-
-                if (item is String) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                    child: Text(
-                      item,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Color.fromARGB(255, 1, 42, 123),
-                      ),
-                    ),
-                  );
-                } else {
-                  return Column(
-                    children: [
-                      _buildListTile(item, context),
-                      Center(
-                        child: Container(
-                          width: 310,
-                          child: Divider(height: 1, thickness: 2, color: Colors.grey[400]),
-                        ),
-                      ),
-                    ],
-                  );
+              // Include trips with 'Completed' status or those with active dates
+              if (trip['status'] == 'Completed' || hasActiveDates) {
+                if (!groupedTrips.containsKey(formattedDate)) {
+                  groupedTrips[formattedDate] = [];
                 }
+                groupedTrips[formattedDate]!.add(trip);
+              }
+            }
+
+            // Use ListView.builder for Pending Service
+            return ListView.builder(
+              itemCount: groupedTrips.length,
+              itemBuilder: (context, index) {
+                final dateKey = groupedTrips.keys.elementAt(index);
+                final tripsForDate = groupedTrips[dateKey]!;
+
+                // Only show date header if there are trips
+                if (tripsForDate.isEmpty) {
+                  return const SizedBox.shrink();
+                }
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // ListTiles for each trip
+                    ...tripsForDate.map((trip) {
+                      return Column(
+                        children: [
+                          _buildListTile(trip, context, dateKey), // Pass dateKey to ListTile
+                          // Divider for each ListTile except the last one
+                        //  Divider(
+                        //         thickness: 2,
+                        //         color: Colors.grey[400],
+                        //         indent: 20,
+                        //         endIndent: 20,
+                        //       )
+                        ],
+                        
+                      );
+                    }).toList(),
+                  ],
+                );
               },
             );
           },
         ),
-        */
 
         // Positioned text for the current date
         Positioned(
@@ -313,38 +227,30 @@ StreamBuilder<QuerySnapshot>(
           ),
         ),
       ],
-    )
+    ),
   );
-  }
+}
 
-
-Widget _buildListTile(DocumentSnapshot trip, BuildContext context) {
+Widget _buildListTile(DocumentSnapshot trip, BuildContext context, String dateKey) {
   DateTime startDate = trip['date'].toDate();
   DateTime endDate = trip['dateto'].toDate();
-  DateTime currentDate = DateTime.now();
-
-  /* Check if the end date is before the current date
-  if (endDate.isBefore(currentDate)) {
-    return const SizedBox.shrink(); // Return nothing if the trip has ended
-  }
-  */
 
   // Check if any of the in-between dates have an "active" status
   List<dynamic> dates = trip['dates'];
   bool hasActiveDates = dates.any((dateEntry) => dateEntry['status'] == 'active');
 
-  // Only show the ListTile if there are active dates
-  if (!hasActiveDates) {
-    return const SizedBox.shrink(); // Return nothing if there are no active dates
+  // Only show the ListTile if there are active dates and the end date has not passed
+  if (!hasActiveDates || endDate.isBefore(DateTime.now())) {
+    return const SizedBox.shrink(); // Return nothing if there are no active dates or if the trip has ended
   }
 
-  // Build and return the ListTile if there are active dates and the end date has not passed
+  // Build and return the ListTile with the date included
   return Container(
     color: Color.fromARGB(21, 245, 245, 245),
     child: ListTile(
       contentPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       title: Text(
-        'Scheduled on ${DateFormat.yMMMd().format(startDate)} to ${DateFormat.yMMMd().format(endDate)}, ${trip['time']}',
+        'Scheduled on ${dateKey}, ${trip['time']}',
         style: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.bold,
@@ -359,23 +265,16 @@ Widget _buildListTile(DocumentSnapshot trip, BuildContext context) {
       trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
       onTap: () {
         // Navigate to the full details screen when clicked
-Navigator.push(
-  context,
-  MaterialPageRoute(
-    builder: (context) => FullDetails(trip: trip),
-  ),
-).then((_) {
-  // Reset system UI style when returning to TripsPage
-  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-    statusBarColor: Color.fromARGB(255, 1, 42, 123),
-    statusBarIconBrightness: Brightness.light,
-  ));
-});
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => FullDetails(trip: trip),
+          ),
+        );
       },
     ),
   );
 }
-
 
 
 

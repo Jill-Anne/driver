@@ -1,6 +1,9 @@
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
 
+String? globalTripID; // Declare the global variable
+
+
 class TripDetails {
   String? tripID;
   LatLng? pickUpLatLng;
@@ -12,6 +15,7 @@ class TripDetails {
   String tripStartDate;  // Ensure these are String
   String tripEndDate;    // Ensure these are String
   String tripTime;     
+  
 
   TripDetails({
     this.tripID,

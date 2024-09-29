@@ -51,65 +51,75 @@ class _NotificationDialogState extends State<NotificationDialog> {
     });
   }
 
-  checkAvailabilityOfTripRequest(BuildContext context) async {
-    showDialog(
-      barrierDismissible: false,
-      context: context,
-      builder: (BuildContext context) => LoadingDialog(
-        messageText: 'please wait...',
-      ),
-    );
+checkAvailabilityOfTripRequest(BuildContext context) async {
+  showDialog(
+    barrierDismissible: false,
+    context: context,
+    builder: (BuildContext context) => LoadingDialog(
+      messageText: 'please wait...',
+    ),
+  );
 
-    DatabaseReference driverTripStatusRef = FirebaseDatabase.instance
-        .ref()
-        .child("driversAccount")
-        .child(FirebaseAuth.instance.currentUser!.uid)
-        .child("newTripStatus");
+  DatabaseReference driverTripStatusRef = FirebaseDatabase.instance
+      .ref()
+      .child("driversAccount")
+      .child(FirebaseAuth.instance.currentUser!.uid)
+      .child("newTripStatus");
 
-    String? newTripStatusValue; // Initialize as null
+  String? newTripStatusValue; // Initialize as null
 
-    await driverTripStatusRef.once().then((snap) {
-      Navigator.pop(context); // Close the loading dialog
+  try {
+    final snap = await driverTripStatusRef.once();
+    Navigator.pop(context); // Close the loading dialog
 
-      if (snap != null &&
-          snap.snapshot != null &&
-          snap.snapshot.value != null) {
-        newTripStatusValue = snap.snapshot.value.toString();
-      } else {
-        cMethods.displaySnackBar("Trip Request Not Found.", context);
-        return;
-      }
+    if (snap.snapshot.exists && snap.snapshot.value != null) {
+      newTripStatusValue = snap.snapshot.value.toString();
+      setTripID(newTripStatusValue!); // Store the trip ID here
 
       if (newTripStatusValue == widget.tripDetailsInfo!.tripID) {
         driverTripStatusRef.set("accepted");
-
-        // Disable homepage location updates
         cMethods.turnOffLocationUpdatesForHomePage();
-
-        // Navigate to NewTripPage
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) =>
-                NewTripPage(newTripDetailsInfo: widget.tripDetailsInfo),
-          ),
-        ).then((_) {
-          // After returning from NewTripPage, navigate to Dashboard
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const Dashboard()),
-          );
-        });
-      } else if (newTripStatusValue == "cancelled") {
-        cMethods.displaySnackBar(
-            "Trip Request has been Cancelled by user.", context);
-      } else if (newTripStatusValue == "timeout") {
-        cMethods.displaySnackBar("Trip Request timed out.", context);
+        navigateToNewTripPage(context);
       } else {
-        cMethods.displaySnackBar("Trip Request removed. Not Found.", context);
+        handleTripCancellationOrTimeout(newTripStatusValue, context);
       }
-    });
+    } else {
+      cMethods.displaySnackBar("Trip Request Not Found.", context);
+    }
+  } catch (e) {
+    Navigator.pop(context); // Close the loading dialog
+    cMethods.displaySnackBar("Error fetching trip status: ${e.toString()}", context);
   }
+}
+
+void navigateToNewTripPage(BuildContext context) {
+  Navigator.pushReplacement(
+    context,
+    MaterialPageRoute(
+      builder: (context) => NewTripPage(newTripDetailsInfo: widget.tripDetailsInfo),
+    ),
+  ).then((_) {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const Dashboard()),
+    );
+  });
+}
+
+void handleTripCancellationOrTimeout(String status, BuildContext context) {
+  switch (status) {
+    case "cancelled":
+      cMethods.displaySnackBar("Trip Request has been Cancelled by user.", context);
+      break;
+    case "timeout":
+      cMethods.displaySnackBar("Trip Request timed out.", context);
+      break;
+    default:
+      cMethods.displaySnackBar("Trip Request removed. Not Found.", context);
+      break;
+  }
+}
+
 
   @override
   void dispose() {

@@ -1,3 +1,5 @@
+import 'package:driver/global/global_var.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
@@ -30,25 +32,64 @@ class _PaymentDialogState extends State<PaymentDialog> {
 
   Future<double> _getFareAmount() async {
     try {
-      return await FirebaseFirestore.instance.runTransaction<double>((transaction) async {
-        DocumentReference fareRef = FirebaseFirestore.instance
-            .collection('currentFare')
-            .doc('latestFare');
-        
-        DocumentSnapshot fareDoc = await transaction.get(fareRef);
+    print("Fetching fare amount for tripID: $currentTripID");
 
-        if (fareDoc.exists) {
-          double fareAmount = (fareDoc['amount'] as num).toDouble();
+    DatabaseReference tripRef = FirebaseDatabase.instance
+        .ref()
+        .child('tripRequests')
+        .child(currentTripID);
+
+    DataSnapshot tripSnapshot = await tripRef.get();
+
+    if (tripSnapshot.exists) {
+      print("Trip document found for tripID: $currentTripID");
+      Map<dynamic, dynamic>? tripData = tripSnapshot.value as Map<dynamic, dynamic>?;
+
+      // Log the entire trip data
+      print("Trip data retrieved: $tripData");
+
+      if (tripData != null) {
+        // Log all keys in tripData for clarity
+        print("Keys in tripData: ${tripData.keys}");
+
+        if (tripData.containsKey('fareAmount')) {
+          var fare = tripData['fareAmount'];
+          double fareAmount = 0.0;
+
+          print("Fare value retrieved: $fare");
+
+if (fare is num) {
+  fareAmount = fare.toDouble();
+} else if (fare is String) {
+  fareAmount = double.tryParse(fare) ?? 0.0;
+} else {
+  print("Unexpected type for fareAmount: ${fare.runtimeType}");
+  return 0.0; // Return a default value for unexpected types
+}
+
+          if (fareAmount < 0) {
+            print("Warning: Negative fare amount retrieved: $fareAmount");
+            return 0.0; // Handle negative fare
+          }
+
+          print("Final fare amount for tripID $currentTripID: $fareAmount");
           return fareAmount;
         } else {
-          print("No data found at 'currentFare/latestFare'");
+          print("fareAmount key not found in trip data for tripID: $currentTripID");
           return 0.0;
         }
-      });
-    } catch (e) {
-      print("Error fetching fare amount: $e");
+      } else {
+        print("Trip data is null for tripID: $currentTripID");
+        return 0.0;
+      }
+    } else {
+      print("No trip found with tripID: $currentTripID");
       return 0.0;
     }
+  } catch (e) {
+    print("Error retrieving fare amount for tripID $currentTripID: $e");
+    return 0.0;
+  }
   }
   
 

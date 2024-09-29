@@ -162,35 +162,43 @@ children: [
   ),
                                 const SizedBox(width: 16),
                                 Expanded(
-                                  child: ElevatedButton(
-                                    onPressed: () {
-                                      if (!isDriverAvailable) {
-                                        goOnlineNow();
-                                        setAndGetLocationUpdates();
-                                        Navigator.pop(context);
-                                        setState(() {
-                                          colorToShow = Colors.pink;
-                                          titleToShow = "GO OFFLINE NOW";
-                                          isDriverAvailable = true;
-                                        });
-                                      } else {
-                                        goOfflineNow();
-                                        Navigator.pop(context);
-                                        setState(() {
-                                          colorToShow = Colors.green;
-                                          titleToShow = "GO ONLINE NOW";
-                                          isDriverAvailable = false;
-                                        });
-                                      }
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor:
-                                          (titleToShow == "GO ONLINE NOW")
-                                              ? Colors.green
-                                              : Colors.pink,
-                                    ),
-                                    child: const Text("CONFIRM"),
-                                  ),
+    child: ElevatedButton(
+  onPressed: () {
+    if (!isDriverAvailable) {
+      goOnlineNow();
+      setAndGetLocationUpdates();
+      Navigator.pop(context);
+      setState(() {
+        colorToShow = Colors.red;
+        titleToShow = "GO OFFLINE NOW";
+        isDriverAvailable = true;
+      });
+    } else {
+      goOfflineNow();
+      Navigator.pop(context);
+      setState(() {
+        colorToShow = Colors.green;
+        titleToShow = "GO ONLINE NOW";
+        isDriverAvailable = false;
+      });
+    }
+  },
+  style: ElevatedButton.styleFrom(
+    backgroundColor: (titleToShow == "GO ONLINE NOW") 
+        ? Colors.green 
+        : Colors.pink,
+  ),
+  child: Text(
+    "CONFIRM",
+    style: TextStyle(
+      color: (titleToShow == "GO ONLINE NOW") 
+          ? Colors.black // Black text for green background
+          : Colors.white, // White text for pink background
+      fontWeight: FontWeight.bold, // Bold text
+    ),
+  ),
+),
+
                                 ),
                               ],
                             ),

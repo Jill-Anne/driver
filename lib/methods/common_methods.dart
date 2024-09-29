@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:driver/global/global_var.dart';
+import 'package:driver/models/trip_details.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -12,6 +13,8 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 
 import '../models/direction_details.dart';
+
+
 
 class CommonMethods {
   checkConnectivity(BuildContext context) async {
@@ -68,18 +71,22 @@ class CommonMethods {
     }
   }
 
-  ///Directions API
+  // DIRECTION API
   static Future<DirectionDetails?> getDirectionDetailsFromAPI(
       LatLng source, LatLng destination) async {
+    // SENT REQUEST TO DIRECTION API
     String urlDirectionsAPI =
         "https://maps.googleapis.com/maps/api/directions/json?destination=${destination.latitude},${destination.longitude}&origin=${source.latitude},${source.longitude}&mode=driving&key=$googleMapKey";
 
+    // JSON FORMAT = WE GET RESPONSE FROM DIRECTION API
     var responseFromDirectionsAPI = await sendRequestToAPI(urlDirectionsAPI);
 
     if (responseFromDirectionsAPI == "error") {
       return null;
     }
 
+    // IF RESPONSE SUCCESS WE GET THIS:
+    // MAKE IT NOT JSON FORMAT OR FORMAL THRU DIRECTION DETAILS MODELS
     DirectionDetails detailsModel = DirectionDetails();
 
     detailsModel.distanceTextString =
@@ -98,23 +105,7 @@ class CommonMethods {
     return detailsModel;
   }
 
-
-  // calculateFareAmount(DirectionDetails directionDetails)
-  // {
-  //   double distancePerKmAmount = 0.4;
-  //   double durationPerMinuteAmount = 0.3;
-  //   double baseFareAmount = 2;
-
-  //   double totalDistanceTravelFareAmount = (directionDetails.distanceValueDigits! / 1000) * distancePerKmAmount;
-  //   double totalDurationSpendFareAmount = (directionDetails.durationValueDigits! / 60) * durationPerMinuteAmount;
-
-  //   double overAllTotalFareAmount = baseFareAmount + totalDistanceTravelFareAmount + totalDurationSpendFareAmount;
-
-  //   return overAllTotalFareAmount.toStringAsFixed(1);
-  // }
-
-
-Future<double> calculateFareAmount(DirectionDetails directionDetails) async {
+Future<Object> calculateFareAmount(DirectionDetails directionDetails) async {
   try {
     // Retrieve the fare parameters from Firebase Firestore
     DocumentSnapshot fareData = await FirebaseFirestore.instance
@@ -130,43 +121,22 @@ Future<double> calculateFareAmount(DirectionDetails directionDetails) async {
     print('Retrieved fare data: ${fareData.data()}');
 
     // Ensure values are retrieved as double, handle possible type issues
-    double distancePerKmAmount;
-    double baseFareAmount;
-
-    try {
-      distancePerKmAmount = (fareData['distancePerKmAmount'] as num).toDouble();
-    } catch (e) {
-      print("Error converting distancePerKmAmount: $e");
-      distancePerKmAmount = 0.0;
-    }
-
-    try {
-      baseFareAmount = (fareData['baseFareAmount'] as num).toDouble();
-    } catch (e) {
-      print("Error converting baseFareAmount: $e");
-      baseFareAmount = 0.0;
-    }
+    double distancePerKmAmount = (fareData['distancePerKmAmount'] as num).toDouble();
+    double baseFareAmount = (fareData['baseFareAmount'] as num).toDouble();
 
     // Distance in km
-    double distanceInKm;
-    try {
-      distanceInKm = directionDetails.distanceValueDigits! / 1000;
-    } catch (e) {
-      print("Error calculating distanceInKm: $e");
-      distanceInKm = 0.0;
-    }
+    double distanceInKm = directionDetails.distanceValueDigits! / 1000; // Convert meters to kilometers
+    print('Distance Value Digits: ${directionDetails.distanceValueDigits}');
+    print('Distance in Km: $distanceInKm');
 
     // Determine if distance exceeds the base fare threshold
     double distanceThreshold = 1.87; // Distance threshold for base fare
+    double totalDistanceTravelFareAmount = 0.0;
 
-    double totalDistanceTravelFareAmount;
     if (distanceInKm > distanceThreshold) {
       // Calculate the fare for the distance beyond the base threshold
       double distanceBeyondThreshold = distanceInKm - distanceThreshold;
       totalDistanceTravelFareAmount = distanceBeyondThreshold * distancePerKmAmount;
-    } else {
-      // No additional fare for distances within the base threshold
-      totalDistanceTravelFareAmount = 0;
     }
 
     // Calculate the overall total fare amount (base fare + distance-based fare)
@@ -182,7 +152,8 @@ Future<double> calculateFareAmount(DirectionDetails directionDetails) async {
         .set({'amount': overAllTotalFareAmount});
 
     print('Calculated fare amount: PHP $overAllTotalFareAmount');
-    return overAllTotalFareAmount;
+
+    return overAllTotalFareAmount.toStringAsFixed(1);
   } catch (e) {
     print("Error fetching fare parameters or calculating fare: $e");
     return 0.0; // Return a default value or handle the error appropriately
@@ -190,5 +161,7 @@ Future<double> calculateFareAmount(DirectionDetails directionDetails) async {
 }
 
 
-  
+
+
+
 }
