@@ -60,12 +60,12 @@ class ServiceDetailsPage extends StatelessWidget {
     final endDate = (serviceDetails['dateto'] as Timestamp?)?.toDate() ?? DateTime.now();
 
     return Container(
-      margin: const EdgeInsets.all(10),
-      child: Card(
-        color: const Color.fromARGB(220, 232, 239, 246),
-        elevation: 5,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+margin: const EdgeInsets.all(10),
+        child: Card(
+      color: Colors.white,
+      elevation: 5,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
         ),
         child: Padding(
           padding: const EdgeInsets.all(16),

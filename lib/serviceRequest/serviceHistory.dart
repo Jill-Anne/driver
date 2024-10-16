@@ -680,34 +680,46 @@ class _CancelledServicesPageState extends State<CancelledServicesPage> {
     );
   }
 
-  Widget _buildListTile(
-      DocumentSnapshot service, DateTime serviceDate, BuildContext context) {
-    return Container(
-      color: Color.fromARGB(21, 245, 245, 245),
-      child: ListTile(
-        contentPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-        title: Text(
-          'Cancelled on ${DateFormat.yMMMd().format(serviceDate)}',
-          style: TextStyle(
-              fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black87),
-        ),
-        subtitle: Text(
-          'From ${service["from"]} to ${service["to"]}',
-          style: TextStyle(fontSize: 12, color: Colors.black54),
-        ),
-        leading: Icon(Icons.cancel),
-        trailing:
-            const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) =>
-                  ServiceHistoryFullCancelledPage(service: service),
-            ),
-          );
-        },
-      ),
-    );
+Widget _buildListTile(
+    DocumentSnapshot service, DateTime serviceDate, BuildContext context) {
+  String cancelledTime = '';
+  List<dynamic> datesArray = service['dates'];
+
+  // Loop through the dates array to find the cancelled entry
+  for (var dateEntry in datesArray) {
+    if (dateEntry['status'] == 'Cancelled') {
+      cancelledTime = dateEntry['cancelled time'] ?? ''; // Get the cancelled time
+      break; // Exit after finding the first cancelled entry
+    }
   }
+
+  return Container(
+    color: Color.fromARGB(21, 245, 245, 245),
+    child: ListTile(
+      contentPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      title: Text(
+        'Cancelled at $cancelledTime for Scheduled Service Request on ${DateFormat.yMMMd().format(serviceDate)}',
+        style: TextStyle(
+            fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black87),
+      ),
+      subtitle: Text(
+        'From ${service["from"]} to ${service["to"]}',
+        style: TextStyle(fontSize: 12, color: Colors.black54),
+      ),
+      leading: Icon(Icons.cancel),
+      trailing:
+          const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                ServiceHistoryFullCancelledPage(service: service),
+          ),
+        );
+      },
+    ),
+  );
+}
+
 }
