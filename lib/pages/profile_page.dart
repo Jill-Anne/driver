@@ -126,49 +126,6 @@ Future<void> _loadUserData() async {
 
   
 
-Future<void> _updatePassword(String newPassword) async {
-  final user = _auth.currentUser;
-  if (user != null && newPassword.isNotEmpty) {
-    try {
-      String currentPassword = await _showCurrentPasswordDialog();
-      if (currentPassword.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Current password is required for password update.')),
-        );
-        return;
-      }
-
-      AuthCredential credential = EmailAuthProvider.credential(
-        email: user.email!,
-        password: currentPassword,
-      );
-
-      await user.reauthenticateWithCredential(credential);
-      await user.updatePassword(newPassword);
-
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('isPasswordSet', true);
-
-      setState(() {
-        _isPasswordSet = true;
-      });
-
-      print('Password updated successfully. Password set flag updated.');
-    } catch (e) {
-      print('Error updating password: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error updating password: $e')),
-      );
-    }
-  } else {
-    print('User not authenticated or password is empty.');
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('User not authenticated or password is empty.')),
-    );
-  }
-}
-
-
 Future<void> _updateUserData() async {
   print('Starting user data update...');
 
@@ -202,16 +159,20 @@ Future<void> _updateUserData() async {
     print('Updating body number to: ${_bodyNumberController.text}');
   }
 
+  String? currentPassword;
+
+  if (_emailController.text.isNotEmpty || _passwordController.text.isNotEmpty) {
+    // Prompt for password to re-authenticate only if updating email or password
+    currentPassword = await _showCurrentPasswordDialog();
+    if (currentPassword == null || currentPassword.isEmpty) {
+      print('Current password is required for updates.');
+      return; // User canceled the prompt or didn't enter a password
+    }
+  }
+
   if (_emailController.text.isNotEmpty) {
     String newEmail = _emailController.text;
     print('Attempting to update email to: $newEmail');
-
-    // Prompt for password to re-authenticate
-    String? password = await _promptForPassword();
-    if (password == null) {
-      print('Password prompt was canceled.');
-      return; // User canceled the prompt
-    }
 
     User? user = FirebaseAuth.instance.currentUser;
 
@@ -223,51 +184,43 @@ Future<void> _updateUserData() async {
       return;
     }
 
-    print('Current user email: ${user.email}');
-
     try {
       // Re-authenticate the user
       AuthCredential credential = EmailAuthProvider.credential(
         email: user.email!,
-        password: password,
+        password: currentPassword!,
       );
       await user.reauthenticateWithCredential(credential);
       print('Re-authentication successful.');
 
-      // Update the email
+      // Update the email in Firebase Auth
       await user.updateEmail(newEmail);
       print('Email updated to: $newEmail');
+
+      // Update the email in Realtime Database
+      updatedData['email'] = newEmail;
 
       // Send a verification email to the new address
       await user.sendEmailVerification();
       print('Verification email sent to $newEmail');
 
-      // Inform the user to verify their email
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('A verification email has been sent to $newEmail. Please verify it.')),
       );
 
-      // Optional: Notify the original email about the change
-      // Implement this using a cloud function or an external email service
-
     } catch (e) {
-      if (e is FirebaseAuthException) {
-        if (e.code == 'operation-not-allowed') {
-          print('Operation not allowed: ${e.message}');
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Email/Password sign-in method is not enabled.')),
-          );
-        } else {
-          print('Error updating email: ${e.message}');
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error updating email: ${e.message}')),
-          );
-        }
-      } else {
-        print('General error: $e');
-      }
+      // Handle errors related to email update
+      print('Error updating email: ${e.toString()}');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error updating email: ${e.toString()}')),
+      );
       return; // Abort the update if email update fails
     }
+  }
+
+  if (_passwordController.text.isNotEmpty) {
+    print('Updating password as part of user data update.');
+    await _updatePassword(_passwordController.text, currentPassword!);
   }
 
   if (_phoneNumberController.text.isNotEmpty) {
@@ -281,18 +234,10 @@ Future<void> _updateUserData() async {
       print('User data updated in Firebase.');
     }
 
-    // Optionally handle password update if still applicable
-    if (_passwordController.text.isNotEmpty) {
-      print('Updating password as part of user data update.');
-      await _updatePassword(_passwordController.text);
-    }
-
-    // Provide success feedback
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('User data updated successfully')),
     );
   } catch (e) {
-    // Provide error feedback
     print('Error updating user data: $e');
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Error updating user data: $e')),
@@ -300,90 +245,35 @@ Future<void> _updateUserData() async {
   }
 }
 
-Future<String?> _promptForPassword() async {
-  String? password;
-  await showDialog<String>(
-    context: context,
-    builder: (BuildContext context) {
-      TextEditingController passwordController = TextEditingController();
-      return AlertDialog(
-        title: const Text('Re-enter Password'),
-        content: TextField(
-          controller: passwordController,
-          decoration: const InputDecoration(labelText: 'Password'),
-          obscureText: true,
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () {
-              password = passwordController.text;
-              Navigator.of(context).pop();
-            },
-            child: const Text('OK'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-            child: const Text('Cancel'),
-          ),
-        ],
-      );
-    },
-  );
-  return password;
-}
-
-Future<String> _showCurrentPasswordDialog() async {
+Future<String?> _showCurrentPasswordDialog() async {
   String currentPassword = '';
 
-  await showDialog(
+  await showDialog<String>(
     context: context,
     builder: (BuildContext context) {
       final TextEditingController _currentPasswordController = TextEditingController();
 
       return AlertDialog(
-        shape: RoundedRectangleBorder(
-          side: BorderSide(color: Colors.black, width: 1), // Black outline border for dialog
-          borderRadius: BorderRadius.circular(8),
-        ),
-        title: const Center( // Center the title
+        title: const Center(
           child: Text(
             'Re-enter Current Password',
             style: TextStyle(color: Color.fromARGB(255, 1, 42, 123), fontSize: 18, fontWeight: FontWeight.bold),
           ),
         ),
-
-        content: Container(
-          
-          height: 90, // Adjust this value to change the height of the dialog
-          child: Column(
-            
-            mainAxisSize: MainAxisSize.min,
-            
-            children: [
-               SizedBox(height: 20), 
-              TextField(
-                controller: _currentPasswordController,
-                obscureText: true,
-                decoration: InputDecoration(
-                  labelText: 'Birthdate',
-                  labelStyle: TextStyle(color: Colors.black),
-                  focusedBorder: OutlineInputBorder( // Outline box for input field
-                    borderSide: BorderSide(color: Colors.black),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  enabledBorder: OutlineInputBorder( // Default outline when not focused
-                    borderSide: BorderSide(color: Colors.black),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                style: TextStyle(color: Colors.black),
-              ),
-            ],
+                     content: TextField(
+         controller: _currentPasswordController,
+          decoration: InputDecoration(
+            labelText: 'Password',
+            border: OutlineInputBorder( // Outline box
+              borderRadius: BorderRadius.circular(8), // Rounded corners
+              borderSide: BorderSide(color: Color.fromARGB(255, 1, 42, 123)), // Border color
+            ),
+            prefixIcon: Icon(Icons.lock, color: Color.fromARGB(255, 1, 42, 123)), // Lock icon
+            contentPadding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0), // Padding
           ),
+          obscureText: true,
         ),
-        actions: <Widget>[
+             actions: <Widget>[
           Center( // Center the button
             child: Container(  // Box for the button with background color
               height: 50, // Adjust height
@@ -413,38 +303,36 @@ Future<String> _showCurrentPasswordDialog() async {
   return currentPassword;
 }
 
-Future<void> _updatePasswordAndSetFlag(String newPassword) async {
-  try {
-    final user = _auth.currentUser;
+Future<void> _updatePassword(String newPassword, String currentPassword) async {
+  final user = _auth.currentUser;
+  if (user != null && newPassword.isNotEmpty) {
+    try {
+      AuthCredential credential = EmailAuthProvider.credential(
+        email: user.email!,
+        password: currentPassword,
+      );
 
-    if (user != null) {
+      await user.reauthenticateWithCredential(credential);
       await user.updatePassword(newPassword);
       print('Password updated successfully.');
-
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      bool? currentFlag = prefs.getBool('isPasswordSet');
-      print('Current isPasswordSet before updating: $currentFlag');
       
+      SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.setBool('isPasswordSet', true);
       setState(() {
         _isPasswordSet = true;
       });
-      print("Password set flag (_isPasswordSet) updated to: $_isPasswordSet");
 
- await FirebaseDatabase.instance
-        .reference()
-        .child('users')
-        .child(user.uid)
-        .child('passwordSet')
-        .set(true)
-        .catchError((error) {
-          print('Failed to set password flag: $error');
-        });
-
-      
+    } catch (e) {
+      print('Error updating password: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error updating password: $e')),
+      );
     }
-  } catch (error) {
-    print('Failed to update password: $error');
+  } else {
+    print('User not authenticated or password is empty.');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('User not authenticated or password is empty.')),
+    );
   }
 }
 
