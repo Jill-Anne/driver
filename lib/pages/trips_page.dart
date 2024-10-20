@@ -1,5 +1,5 @@
 import 'package:driver/pages/advance_booking_pending.dart';
-import 'package:driver/pages/new_advance_booking_pending.dart';
+import 'package:driver/pages/pending_service.dart';
 import 'package:driver/TripHistory.dart/trips_history_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';

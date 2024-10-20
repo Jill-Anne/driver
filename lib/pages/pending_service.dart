@@ -96,20 +96,23 @@ Widget build(BuildContext context) {
     statusBarColor: Color.fromARGB(255, 1, 42, 123),
     statusBarIconBrightness: Brightness.light,
   ));
-return Scaffold(
-    backgroundColor: Color.fromARGB(247, 245, 245, 245),
+
+  return Scaffold(
+    backgroundColor: const Color.fromARGB(247, 245, 245, 245),
     body: Stack(
       children: [
-        // StreamBuilder for Pending Service
         StreamBuilder<QuerySnapshot>(
           stream: FirebaseFirestore.instance
               .collection('Advance Bookings')
               .where('status', whereIn: ['Completed', 'Accepted', 'Active'])
               .snapshots(),
           builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+            // Existing error and loading checks...
+
             if (snapshot.hasError) {
-              return const Center(child: Text('Error occurred'));
+              return const Center(child: Text('Error loading data'));
             }
+
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
             }
@@ -146,36 +149,34 @@ return Scaffold(
               }
             }
 
+            // Sort the dates in descending order
+            List<String> sortedDates = groupedTrips.keys.toList()
+              ..sort((a, b) => DateFormat('MMM d, yyyy').parse(b).compareTo(DateFormat('MMM d, yyyy').parse(a)));
+
             // Use ListView.builder for Pending Service
             return ListView.builder(
-              itemCount: groupedTrips.length,
+              itemCount: sortedDates.length,
               itemBuilder: (context, index) {
-                final dateKey = groupedTrips.keys.elementAt(index);
+                final dateKey = sortedDates[index];
                 final tripsForDate = groupedTrips[dateKey]!;
-
-                // Only show date header if there are trips
-                if (tripsForDate.isEmpty) {
-                  return const SizedBox.shrink();
-                }
 
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ListTiles for each trip
+                   Padding(
+  padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+  child: Text(
+    dateKey, // Display the date as a header
+    style: const TextStyle(
+      fontWeight: FontWeight.bold,
+      fontSize: 14,
+      color: Color.fromARGB(255, 1, 42, 123), // Updated color
+    ),
+  ),
+),
+
                     ...tripsForDate.map((trip) {
-                      return Column(
-                        children: [
-                          _buildListTile(trip, context, dateKey), // Pass dateKey to ListTile
-                          // Divider for each ListTile except the last one
-                        //  Divider(
-                        //         thickness: 2,
-                        //         color: Colors.grey[400],
-                        //         indent: 20,
-                        //         endIndent: 20,
-                        //       )
-                        ],
-                        
-                      );
+                      return _buildListTile(trip, context, dateKey); // Pass dateKey to ListTile
                     }).toList(),
                   ],
                 );
@@ -191,7 +192,7 @@ return Scaffold(
           bottom: 40,
           child: Text(
             'As of ${DateFormat('MMM d, yyyy').format(DateTime.now())}',
-            style: TextStyle(
+            style: const TextStyle(
               color: Color.fromARGB(255, 1, 42, 123),
               fontWeight: FontWeight.w500,
               fontSize: 14,
@@ -232,7 +233,6 @@ return Scaffold(
 }
 
 Widget _buildListTile(DocumentSnapshot trip, BuildContext context, String dateKey) {
-  DateTime startDate = trip['date'].toDate();
   DateTime endDate = trip['dateto'].toDate();
 
   // Check if any of the in-between dates have an "active" status
@@ -245,37 +245,46 @@ Widget _buildListTile(DocumentSnapshot trip, BuildContext context, String dateKe
   }
 
   // Build and return the ListTile with the date included
-  return Container(
-    color: Color.fromARGB(21, 245, 245, 245),
-    child: ListTile(
-      contentPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-      title: Text(
-        'Scheduled on ${dateKey}, ${trip['time']}',
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
-          color: Colors.black87,
+  return Column(
+    children: [
+      Container(
+        color: const Color.fromARGB(21, 245, 245, 245),
+        child: ListTile(
+          contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+          title: Text(
+            'Scheduled on ${dateKey}, ${trip['time']}',
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
+          subtitle: Text(
+            'From ${trip["from"]} to ${trip["to"]}',
+            style: const TextStyle(fontSize: 12, color: Colors.black54),
+          ),
+          leading: const Icon(Icons.event),
+          trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+          onTap: () {
+            // Navigate to the full details screen when clicked
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => FullDetails(trip: trip),
+              ),
+            );
+          },
         ),
       ),
-      subtitle: Text(
-        'From ${trip["from"]} to ${trip["to"]}',
-        style: TextStyle(fontSize: 12, color: Colors.black54),
+      Divider(
+        thickness: 2, // Adjust thickness
+        color: Colors.grey[400], // Adjust color
+        indent: 20, // Adjust the left padding of the divider
+        endIndent: 20, // Adjust the right padding of the divider
       ),
-      leading: Icon(Icons.event),
-      trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
-      onTap: () {
-        // Navigate to the full details screen when clicked
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => FullDetails(trip: trip),
-          ),
-        );
-      },
-    ),
+    ],
   );
 }
-
 
 
   void _deleteTrip(String key) {

@@ -247,6 +247,7 @@ Future<void> _updateUserData() async {
 
 Future<String?> _showCurrentPasswordDialog() async {
   String currentPassword = '';
+  bool _isPasswordVisible = false; // Visibility state
 
   await showDialog<String>(
     context: context,
@@ -260,37 +261,56 @@ Future<String?> _showCurrentPasswordDialog() async {
             style: TextStyle(color: Color.fromARGB(255, 1, 42, 123), fontSize: 18, fontWeight: FontWeight.bold),
           ),
         ),
-                     content: TextField(
-         controller: _currentPasswordController,
-          decoration: InputDecoration(
-            labelText: 'Password',
-            border: OutlineInputBorder( // Outline box
-              borderRadius: BorderRadius.circular(8), // Rounded corners
-              borderSide: BorderSide(color: Color.fromARGB(255, 1, 42, 123)), // Border color
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _currentPasswordController,
+              obscureText: !_isPasswordVisible, // Toggle visibility
+              decoration: InputDecoration(
+                labelText: 'Password',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Color.fromARGB(255, 1, 42, 123)),
+                ),
+                prefixIcon: Icon(Icons.lock, color: Color.fromARGB(255, 1, 42, 123)),
+                contentPadding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                    color: Color.fromARGB(255, 1, 42, 123),
+                  ),
+                  onPressed: () {
+                    // Toggle the visibility state
+                    setState(() {
+                      _isPasswordVisible = !_isPasswordVisible;
+                    });
+                  },
+                ),
+              ),
             ),
-            prefixIcon: Icon(Icons.lock, color: Color.fromARGB(255, 1, 42, 123)), // Lock icon
-            contentPadding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0), // Padding
-          ),
-          obscureText: true,
+          ],
         ),
-             actions: <Widget>[
-          Center( // Center the button
-            child: Container(  // Box for the button with background color
-              height: 50, // Adjust height
-              width: 150, // Adjust width
+        actions: <Widget>[
+          Center(
+            child: Container(
+              height: 50,
+              width: 150,
               decoration: BoxDecoration(
-                color: Color.fromARGB(255, 1, 42, 123), // Background color
-                borderRadius: BorderRadius.circular(8), // Rounded corners
+                color: Color.fromARGB(255, 1, 42, 123),
+                borderRadius: BorderRadius.circular(8),
               ),
               child: TextButton(
-                onPressed: () {
+                onPressed: () async {
+
                   currentPassword = _currentPasswordController.text;
                   print('Current password entered in dialog: $currentPassword');
-                  Navigator.of(context).pop();
+                  Navigator.of(context).pop(); // Close the loading overlay
+                  Navigator.of(context).pop(); // Close the dialog
                 },
                 child: const Text(
                   'Confirm',
-                  style: TextStyle(color:Colors.white,  fontSize: 18, ),
+                  style: TextStyle(color: Colors.white, fontSize: 18),
                 ),
               ),
             ),
@@ -302,6 +322,7 @@ Future<String?> _showCurrentPasswordDialog() async {
 
   return currentPassword;
 }
+
 
 Future<void> _updatePassword(String newPassword, String currentPassword) async {
   final user = _auth.currentUser;
