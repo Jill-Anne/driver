@@ -171,7 +171,7 @@ Future<void> _updatePassword(String newPassword) async {
 
 Future<void> _updateUserData() async {
   print('Starting user data update...');
-  
+
   if (userKey.isEmpty) {
     print('User key is empty, aborting update.');
     return; // Ensure that userKey is available
@@ -201,10 +201,75 @@ Future<void> _updateUserData() async {
     updatedData['bodyNumber'] = _bodyNumberController.text;
     print('Updating body number to: ${_bodyNumberController.text}');
   }
+
   if (_emailController.text.isNotEmpty) {
-    updatedData['email'] = _emailController.text;
-    print('Updating email to: ${_emailController.text}');
+    String newEmail = _emailController.text;
+    print('Attempting to update email to: $newEmail');
+
+    // Prompt for password to re-authenticate
+    String? password = await _promptForPassword();
+    if (password == null) {
+      print('Password prompt was canceled.');
+      return; // User canceled the prompt
+    }
+
+    User? user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      print('No user is currently signed in.');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No user is currently signed in.')),
+      );
+      return;
+    }
+
+    print('Current user email: ${user.email}');
+
+    try {
+      // Re-authenticate the user
+      AuthCredential credential = EmailAuthProvider.credential(
+        email: user.email!,
+        password: password,
+      );
+      await user.reauthenticateWithCredential(credential);
+      print('Re-authentication successful.');
+
+      // Update the email
+      await user.updateEmail(newEmail);
+      print('Email updated to: $newEmail');
+
+      // Send a verification email to the new address
+      await user.sendEmailVerification();
+      print('Verification email sent to $newEmail');
+
+      // Inform the user to verify their email
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('A verification email has been sent to $newEmail. Please verify it.')),
+      );
+
+      // Optional: Notify the original email about the change
+      // Implement this using a cloud function or an external email service
+
+    } catch (e) {
+      if (e is FirebaseAuthException) {
+        if (e.code == 'operation-not-allowed') {
+          print('Operation not allowed: ${e.message}');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Email/Password sign-in method is not enabled.')),
+          );
+        } else {
+          print('Error updating email: ${e.message}');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error updating email: ${e.message}')),
+          );
+        }
+      } else {
+        print('General error: $e');
+      }
+      return; // Abort the update if email update fails
+    }
   }
+
   if (_phoneNumberController.text.isNotEmpty) {
     updatedData['phoneNumber'] = _phoneNumberController.text;
     print('Updating phone number to: ${_phoneNumberController.text}');
@@ -233,6 +298,40 @@ Future<void> _updateUserData() async {
       SnackBar(content: Text('Error updating user data: $e')),
     );
   }
+}
+
+Future<String?> _promptForPassword() async {
+  String? password;
+  await showDialog<String>(
+    context: context,
+    builder: (BuildContext context) {
+      TextEditingController passwordController = TextEditingController();
+      return AlertDialog(
+        title: const Text('Re-enter Password'),
+        content: TextField(
+          controller: passwordController,
+          decoration: const InputDecoration(labelText: 'Password'),
+          obscureText: true,
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () {
+              password = passwordController.text;
+              Navigator.of(context).pop();
+            },
+            child: const Text('OK'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: const Text('Cancel'),
+          ),
+        ],
+      );
+    },
+  );
+  return password;
 }
 
 Future<String> _showCurrentPasswordDialog() async {

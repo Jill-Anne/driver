@@ -1,3 +1,5 @@
+import 'package:driver/authentication/forgot_password.dart';
+import 'package:driver/methods/common_methods.dart';
 import 'package:driver/pages/home_page.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -20,6 +22,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _passwordController = TextEditingController();
   final FirebaseAuth _auth = FirebaseAuth.instance;
   bool _isPasswordSet = false; // Flag to check if password is set.
+CommonMethods cMethods = CommonMethods();
 
   @override
   void initState() {
@@ -55,41 +58,39 @@ Future<void> _login(BuildContext context) async {
   }
 
   try {
-    // Authentication logic
-          // Show full-screen "Logging in..." animation while processing the login
-      showDialog(
-        context: context,
-        barrierDismissible: false, // Prevents dismissing
-        builder: (BuildContext context) {
-          return Scaffold(
-            backgroundColor: Colors.white,// Colors.white.withOpacity(0.5),
-            body: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Fullscreen Lottie animation for "Loading" or "Logging in"
-                  Lottie.asset(
-                    'assets/images/loading.json', // Path to your Lottie animation
-                    width: MediaQuery.of(context).size.width * 0.9,
-                    height: MediaQuery.of(context).size.width * 0.9,
-                    fit: BoxFit.cover,
-                    repeat: true,
+    // Show full-screen "Logging in..." animation while processing the login
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Scaffold(
+          backgroundColor: Colors.white,
+          body: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Lottie.asset(
+                  'assets/images/loading.json',
+                  width: MediaQuery.of(context).size.width * 0.9,
+                  height: MediaQuery.of(context).size.width * 0.9,
+                  fit: BoxFit.cover,
+                  repeat: true,
+                ),
+                const SizedBox(height: 50),
+                const Text(
+                  "Authenticating",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Color.fromARGB(255, 1, 42, 123),
                   ),
-                  const SizedBox(height: 50),
-                  const Text(
-                    "Authenticating",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Color.fromARGB(255, 1, 42, 123),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-          );
-        },
-      );
+          ),
+        );
+      },
+    );
 
     UserCredential userCredential = await _auth.signInWithEmailAndPassword(
       email: email,
@@ -97,14 +98,18 @@ Future<void> _login(BuildContext context) async {
     );
 
     if (userCredential.user != null) {
+      // Check if the email is verified
+      if (!userCredential.user!.emailVerified) {
+        Navigator.pop(context); // Close the loading dialog
+        _showErrorDialog(context, "Please verify your email before logging in.");
+        return;
+      }
+
       print('Login successful.');
-              // Delay closing the dialog to let the animation finish
-        await Future.delayed(const Duration(seconds: 2));
+      await Future.delayed(const Duration(seconds: 2));
+      Navigator.pop(context); // Close the "Logging in..." dialog
 
-        // Close the "Logging in..." animation dialog after success
-        Navigator.pop(context);
-
-        // Navigate to Dashboard
+      // Navigate to Dashboard
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const Dashboard()),
@@ -112,9 +117,11 @@ Future<void> _login(BuildContext context) async {
     }
   } catch (error) {
     print('Login failed: $error');
+    Navigator.pop(context); // Close the loading dialog
     _showErrorDialog(context, "An error occurred: $error");
   }
 }
+
 
   // Method to show error dialog
   void _showErrorDialog(BuildContext context, String message) {
@@ -135,7 +142,7 @@ Future<void> _login(BuildContext context) async {
     );
   }
 
- @override
+@override
 Widget build(BuildContext context) {
   return Scaffold(
     resizeToAvoidBottomInset: false,
@@ -158,10 +165,10 @@ Widget build(BuildContext context) {
                   color: Colors.black,
                 ),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               TextField(
                 controller: _emailController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: "Email",
                   prefixIcon: Icon(Icons.email),
                   border: OutlineInputBorder(),
@@ -174,17 +181,17 @@ Widget build(BuildContext context) {
                   floatingLabelBehavior: FloatingLabelBehavior.auto,
                   labelStyle: TextStyle(color: Colors.black),
                 ),
-                style: TextStyle(
+                style: const TextStyle(
                   decoration: TextDecoration.none,
                   color: Colors.black,
                 ),
                 keyboardType: TextInputType.emailAddress,
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               if (_isPasswordSet)
                 TextField(
                   controller: _passwordController,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: "Password",
                     prefixIcon: Icon(Icons.lock),
                     border: OutlineInputBorder(),
@@ -197,7 +204,7 @@ Widget build(BuildContext context) {
                     floatingLabelBehavior: FloatingLabelBehavior.auto,
                     labelStyle: TextStyle(color: Colors.black),
                   ),
-                  style: TextStyle(
+                  style: const TextStyle(
                     decoration: TextDecoration.none,
                     color: Colors.black,
                   ),
@@ -205,35 +212,36 @@ Widget build(BuildContext context) {
                 )
               else
                 TextField(
-  controller: _birthdateController,
-  decoration: InputDecoration(
-    labelText: "Birthdate (MMDDYYYY)",
-    prefixIcon: Icon(Icons.calendar_today),
-    border: OutlineInputBorder(),
-    enabledBorder: OutlineInputBorder(
-      borderSide: BorderSide(color: Colors.grey, width: 1.0),
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderSide: BorderSide(color: Colors.black, width: 2.0),
-    ),
-    floatingLabelBehavior: FloatingLabelBehavior.auto,
-    labelStyle: TextStyle(color: Colors.black),
-  ),
-  style: TextStyle(
-    decoration: TextDecoration.none,
-    color: Colors.black,
-  ),
-  keyboardType: TextInputType.text, // Allows both letters and numbers
-  inputFormatters: [
-    FilteringTextInputFormatter.deny(RegExp(r'[^\dA-Za-z]')), // Allow only letters and numbers
-    LengthLimitingTextInputFormatter(16), // Limits the length to 8 characters if necessary
-  ],
-),
-
-              SizedBox(height: 30),
+                  controller: _birthdateController,
+                  decoration: const InputDecoration(
+                    labelText: "Birthdate (MMDDYYYY)",
+                    prefixIcon: Icon(Icons.calendar_today),
+                    border: OutlineInputBorder(),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.grey, width: 1.0),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.black, width: 2.0),
+                    ),
+                    floatingLabelBehavior: FloatingLabelBehavior.auto,
+                    labelStyle: TextStyle(color: Colors.black),
+                  ),
+                  style: const TextStyle(
+                    decoration: TextDecoration.none,
+                    color: Colors.black,
+                  ),
+                  keyboardType: TextInputType.text,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.deny(RegExp(r'[^\dA-Za-z]')),
+                    LengthLimitingTextInputFormatter(16),
+                  ],
+                ),
+              const SizedBox(height: 30),
               signInSignUpButton(context, true, () {
                 _login(context);
               }),
+              const SizedBox(height: 10), // Adjust spacing
+              forgotPasswordText(context), // Add this line
             ],
           ),
         ),
@@ -246,5 +254,25 @@ Widget build(BuildContext context) {
     ),
   );
 }
+
+Widget forgotPasswordText(BuildContext context) {
+  return Center(
+    child: GestureDetector(
+      onTap: () {
+        navigateToForgotPassword(context);
+      },
+      child: const Text(
+        "Forgot Password?",
+        style: TextStyle(
+          color: Color.fromARGB(255, 1, 42, 123),
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    ),
+  );
+}
+
+
 
 }
