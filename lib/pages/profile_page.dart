@@ -261,35 +261,39 @@ Future<String?> _showCurrentPasswordDialog() async {
             style: TextStyle(color: Color.fromARGB(255, 1, 42, 123), fontSize: 18, fontWeight: FontWeight.bold),
           ),
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: _currentPasswordController,
-              obscureText: !_isPasswordVisible, // Toggle visibility
-              decoration: InputDecoration(
-                labelText: 'Password',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Color.fromARGB(255, 1, 42, 123)),
-                ),
-                prefixIcon: Icon(Icons.lock, color: Color.fromARGB(255, 1, 42, 123)),
-                contentPadding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                    color: Color.fromARGB(255, 1, 42, 123),
+        content: StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: _currentPasswordController,
+                  obscureText: !_isPasswordVisible, // Toggle visibility
+                  decoration: InputDecoration(
+                    labelText: 'Password',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Color.fromARGB(255, 1, 42, 123)),
+                    ),
+                    prefixIcon: Icon(Icons.lock, color: Color.fromARGB(255, 1, 42, 123)),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                        color: Color.fromARGB(255, 1, 42, 123),
+                      ),
+                      onPressed: () {
+                        // Toggle the visibility state
+                        setState(() {
+                          _isPasswordVisible = !_isPasswordVisible;
+                        });
+                      },
+                    ),
                   ),
-                  onPressed: () {
-                    // Toggle the visibility state
-                    setState(() {
-                      _isPasswordVisible = !_isPasswordVisible;
-                    });
-                  },
                 ),
-              ),
-            ),
-          ],
+              ],
+            );
+          },
         ),
         actions: <Widget>[
           Center(
@@ -301,11 +305,9 @@ Future<String?> _showCurrentPasswordDialog() async {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: TextButton(
-                onPressed: () async {
-
+                onPressed: () {
                   currentPassword = _currentPasswordController.text;
                   print('Current password entered in dialog: $currentPassword');
-                  Navigator.of(context).pop(); // Close the loading overlay
                   Navigator.of(context).pop(); // Close the dialog
                 },
                 child: const Text(
@@ -322,6 +324,7 @@ Future<String?> _showCurrentPasswordDialog() async {
 
   return currentPassword;
 }
+
 
 
 Future<void> _updatePassword(String newPassword, String currentPassword) async {
