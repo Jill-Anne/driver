@@ -63,7 +63,9 @@ class _HomePageState extends State<HomePage> {
     retrieveUserData().then((userData) {
       print('Retrieved user data: $userData');
     });
+        setOnlineStatus(false);
     getOnlineStatus();
+
   }
 
   @override
@@ -71,6 +73,8 @@ class _HomePageState extends State<HomePage> {
     positionStreamHomePage?.cancel();
     super.dispose();
   }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -293,19 +297,22 @@ children: [
     }
   }
 
-  Future<void> getOnlineStatus() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      isDriverAvailable = prefs.getBool('isDriverAvailable') ?? false;
-      colorToShow = isDriverAvailable ? Colors.pink : Colors.green;
-      titleToShow = isDriverAvailable ? "GO OFFLINE NOW" : "GO ONLINE NOW";
-    });
-  }
+Future<void> getOnlineStatus() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  bool previouslyOnline = prefs.getBool('isDriverAvailable') ?? false; // Default to false if not set
+  setState(() {
+    isDriverAvailable = previouslyOnline;
+    colorToShow = isDriverAvailable ? Colors.pink : Colors.green;
+    titleToShow = isDriverAvailable ? "GO OFFLINE NOW" : "GO ONLINE NOW";
+  });
+}
+
 
   Future<void> setOnlineStatus(bool status) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setBool('isDriverAvailable', status);
   }
+
 
   void goOnlineNow() async {
     try {
