@@ -269,74 +269,77 @@ class _NewTripPageState extends State<NewTripPage>
       }
     }
   }
+endTripNow() async {
+  // Create LatLng for driver's current location
+  var driverCurrentLocationLatLng = LatLng(driverCurrentPosition!.latitude, driverCurrentPosition!.longitude);
+  print('Driver Current Location: ${driverCurrentLocationLatLng.latitude}, ${driverCurrentLocationLatLng.longitude}');
 
-  endTripNow() async
-  {
-    showDialog(
-      barrierDismissible: false,
-      context: context,
-      builder: (BuildContext context) => LoadingDialog(messageText: 'Please wait...',),
-    );
+  // Show loading dialog (optional, you can skip this)
+  showDialog(
+    barrierDismissible: false,
+    context: context,
+    builder: (BuildContext context) => LoadingDialog(messageText: 'Please wait...'),
+  );
 
-// Create LatLng for driver's current location
-var driverCurrentLocationLatLng = LatLng(driverCurrentPosition!.latitude, driverCurrentPosition!.longitude);
-
-// Print driver's current location
-print('Driver Current Location: ${driverCurrentLocationLatLng.latitude}, ${driverCurrentLocationLatLng.longitude}');
-
-// Get direction details from API
-var directionDetailsEndTripInfo = await CommonMethods.getDirectionDetailsFromAPI(
+  // Get direction details from API
+  var directionDetailsEndTripInfo = await CommonMethods.getDirectionDetailsFromAPI(
     widget.newTripDetailsInfo!.pickUpLatLng!, // pickup
     widget.newTripDetailsInfo!.dropOffLatLng! // drop-off
-);
+  );
 
+  // Dismiss loading dialog early
+  Navigator.pop(context); 
 
-// Print direction details
-if (directionDetailsEndTripInfo != null) {
+  // Check if direction details were retrieved
+  if (directionDetailsEndTripInfo != null) {
     print('Direction Details:');
     print('Distance: ${directionDetailsEndTripInfo.distanceTextString}');
     print('Duration: ${directionDetailsEndTripInfo.durationTextString}');
-} else {
-    print('Failed to retrieve direction details.');
-}
+    
+    // Calculate fare amount
+    String fareAmount = (await cMethods.calculateFareAmount(directionDetailsEndTripInfo)).toString();
+    print('Calculated fareAmount: $fareAmount');
 
-
-    Navigator.pop(context);
-
-    String fareAmount = (await cMethods.calculateFareAmount(directionDetailsEndTripInfo!)).toString();
-print('Calculated fareAmount: $fareAmount');
-
-
-    await FirebaseDatabase.instance.ref()
-    .child("tripRequests")
-    .child(widget.newTripDetailsInfo!.tripID!)
-    .child("fareAmount")
-    .set(fareAmount);
-print('Fare amount saved in Firebase: $fareAmount');
-
-    await FirebaseDatabase.instance.ref().child("tripRequests")
-        .child(widget.newTripDetailsInfo!.tripID!)
-        .child("status").set("ended");
-
-    positionStreamNewTripPage!.cancel();
-
-    //dialog for collecting fare amount
+    // Display payment dialog immediately
     displayPaymentDialog(fareAmount);
 
-    //save fare amount to driver total earnings
-    //saveFareAmountToDriverTotalEarnings(fareAmount);
-  }
+    // Save fare amount in Firebase (run this in the background)
+    await FirebaseDatabase.instance.ref()
+        .child("tripRequests")
+        .child(widget.newTripDetailsInfo!.tripID!)
+        .child("fareAmount")
+        .set(fareAmount);
+    print('Fare amount saved in Firebase: $fareAmount');
 
-  displayPaymentDialog(fareAmount)
-  {
-   showDialog(
-  context: context,
-  builder: (context) => PaymentDialog(
-    fareAmount: fareAmount, tripID: '', amount: '',
-    
-  ),
-);
+    // Update trip status in Firebase
+    await FirebaseDatabase.instance.ref()
+        .child("tripRequests")
+        .child(widget.newTripDetailsInfo!.tripID!)
+        .child("status")
+        .set("ended");
+
+    // Cancel any position streams if necessary
+    positionStreamNewTripPage!.cancel();
+  } else {
+    print('Failed to retrieve direction details.');
   }
+}
+
+displayPaymentDialog(String fareAmount) {
+  // Check if the current context is still valid
+  if (context.mounted) {
+    showDialog(
+      context: context,
+      builder: (context) => PaymentDialog(
+        fareAmount: fareAmount,
+        tripID: widget.newTripDetailsInfo!.tripID!,
+        amount: '', // Pass any relevant amount here
+      ),
+    );
+  } else {
+    print("Context is no longer valid, cannot show dialog.");
+  }
+}
 
   // saveFareAmountToDriverTotalEarnings(String fareAmount) async
   // {
@@ -677,23 +680,23 @@ const SizedBox(width: 8), // Add space between image and text
                     
 
                     const SizedBox(height: 20,),
-
-                   Center(
+Center(
   child: ElevatedButton(
     onPressed: () async {
-      // Arrived button
       if (statusOfTrip == "accepted") {
         setState(() {
           buttonTitleText = "START TRIP";
-          buttonColor = const Color(0xFF2E3192); // Design color
+          buttonColor = const Color(0xFF2E3192);
         });
 
         statusOfTrip = "arrived";
 
-        FirebaseDatabase.instance.ref()
+        await FirebaseDatabase.instance
+            .ref()
             .child("tripRequests")
             .child(widget.newTripDetailsInfo!.tripID!)
-            .child("status").set("arrived");
+            .child("status")
+            .set("arrived");
 
         showDialog(
           barrierDismissible: false,
@@ -707,40 +710,37 @@ const SizedBox(width: 8), // Add space between image and text
         );
 
         Navigator.pop(context);
-      }
-      // Start trip button
-      else if (statusOfTrip == "arrived") {
+      } else if (statusOfTrip == "arrived") {
         setState(() {
           buttonTitleText = "END TRIP";
-          buttonColor = Colors.red; // Amber color
+          buttonColor = Colors.red;
         });
 
         statusOfTrip = "ontrip";
 
-        FirebaseDatabase.instance.ref()
+        await FirebaseDatabase.instance
+            .ref()
             .child("tripRequests")
             .child(widget.newTripDetailsInfo!.tripID!)
-            .child("status").set("ontrip");
-      }
-      // End trip button
-      else if (statusOfTrip == "ontrip") {
-        // End the trip
-        endTripNow();
+            .child("status")
+            .set("ontrip");
+      } else if (statusOfTrip == "ontrip") {
+        await endTripNow(); // Ensure this is awaited
       }
     },
     style: ElevatedButton.styleFrom(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 28), // Padding for size
-      backgroundColor: buttonColor, // Dynamic button color
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 28),
+      backgroundColor: buttonColor,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(5), // Rounded corners
+        borderRadius: BorderRadius.circular(5),
       ),
     ),
     child: Text(
-      buttonTitleText, // Dynamic button text
+      buttonTitleText,
       style: const TextStyle(
-        color: Colors.white, // White text color
-        fontWeight: FontWeight.bold, // Bold text
-        fontSize: 18, // Font size
+        color: Colors.white,
+        fontWeight: FontWeight.bold,
+        fontSize: 18,
       ),
     ),
   ),
