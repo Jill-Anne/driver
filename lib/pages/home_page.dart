@@ -78,6 +78,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void dispose() {
     positionStreamHomePage?.cancel();
+     presenceManager.dispose(); // Stop the PresenceManager timer
     super.dispose();
   }
 
