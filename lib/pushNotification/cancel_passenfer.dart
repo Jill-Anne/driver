@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:driver/env/firebaseToken.dart';
+import 'package:driver/methods/firebaseToken.dart';
 
 import 'package:http/http.dart' as http;
 
