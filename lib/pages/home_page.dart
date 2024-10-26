@@ -6,6 +6,7 @@ import 'package:driver/authentication/login_screen.dart';
 import 'package:driver/pages/dashboard.dart';
 import 'package:driver/pages/profile_page.dart';
 import 'package:driver/pushNotification/push_notification_system.dart';
+import 'package:driver/widgets/presence_manager.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
@@ -39,6 +40,7 @@ class _HomePageState extends State<HomePage> {
   final DatabaseReference _database = FirebaseDatabase.instance.reference();
   final FirebaseAuth _auth = FirebaseAuth.instance;
   Map<String, dynamic> userData = {};
+ late PresenceManager presenceManager; // Declare presence manager
 
   @override
   void initState() {
@@ -48,10 +50,13 @@ class _HomePageState extends State<HomePage> {
     FirebaseAuth.instance.authStateChanges().listen((User? user) {
       if (user != null) {
         print('User is authenticated: ${user.uid}');
+         presenceManager = PresenceManager(user.uid);
       } else {
         print('User is not authenticated.');
       }
     });
+
+    
 
     // Initialize Geofire
     Geofire.initialize('driversLocation');
@@ -63,6 +68,8 @@ class _HomePageState extends State<HomePage> {
     retrieveUserData().then((userData) {
       print('Retrieved user data: $userData');
     });
+
+    
         setOnlineStatus(false);
     getOnlineStatus();
 
@@ -349,6 +356,8 @@ Future<void> getOnlineStatus() async {
         });
 
         print("User is now online.");
+        // Initialize PresenceManager here as well to ensure online status is set
+        presenceManager = PresenceManager(user.uid);
       } else {
         print('User is not authenticated.');
         Navigator.push(
