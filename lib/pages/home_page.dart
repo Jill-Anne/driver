@@ -253,83 +253,33 @@ children: [
         .animateCamera(CameraUpdate.newCameraPosition(cameraPosition));
   }
 
-  void setAndGetLocationUpdates() {
-    positionStreamHomePage =
-        Geolocator.getPositionStream().listen((Position position) async {
-      currentPositionOfDriver = position;
+void setAndGetLocationUpdates() {
+  positionStreamHomePage = Geolocator.getPositionStream().listen((Position position) async {
+    currentPositionOfDriver = position;
 
-      User? user = FirebaseAuth.instance.currentUser;
-      if (user != null && isDriverAvailable) {
-        try {
-          await Geofire.setLocation(user.uid, currentPositionOfDriver!.latitude,
-              currentPositionOfDriver!.longitude);
-        } catch (e) {
-          print("Error updating location: $e");
-        }
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null && isDriverAvailable) {
+      try {
+        // Debounce logic to prevent excessive writes
+        await Geofire.setLocation(user.uid, currentPositionOfDriver!.latitude, currentPositionOfDriver!.longitude);
+      } catch (e) {
+        print("Error updating location: $e");
       }
-    }, onError: (e) {
-      print("Error getting location: $e");
-    });
-  }
-
-  void goOfflineNow() async {
-    try {
-      User? user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        // Stop sharing driver live location updates
-        Geofire.removeLocation(user.uid);
-
-        // Stop listening to the newTripStatus
-        DatabaseReference? newTripRequestReference = FirebaseDatabase.instance
-            .reference()
-            .child("driversAccount")
-            .child(user.uid)
-            .child("newTripStatus");
-        newTripRequestReference.onDisconnect().remove();
-
-        // Remove the user from "onlineDrivers"
-        Geofire.removeLocation(user.uid);
-      }
-
-      await setOnlineStatus(false);
-
-      setState(() {
-        colorToShow = Colors.green;
-        titleToShow = "GO ONLINE NOW";
-        isDriverAvailable = false;
-      });
-
-      print("User is now offline.");
-    } catch (e) {
-      print("Error going offline: $e");
     }
-  }
-
-Future<void> getOnlineStatus() async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  bool previouslyOnline = prefs.getBool('isDriverAvailable') ?? false; // Default to false if not set
-  setState(() {
-    isDriverAvailable = previouslyOnline;
-    colorToShow = isDriverAvailable ? Colors.pink : Colors.green;
-    titleToShow = isDriverAvailable ? "GO OFFLINE NOW" : "GO ONLINE NOW";
+  }, onError: (e) {
+    print("Error getting location: $e");
   });
 }
 
 
-  Future<void> setOnlineStatus(bool status) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('isDriverAvailable', status);
-  }
-
-
-  void goOnlineNow() async {
+   void goOnlineNow() async {
     try {
       User? user = FirebaseAuth.instance.currentUser;
       if (user != null) {
         Position positionOfUser = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.bestForNavigation,
         );
-
+ presenceManager.setDriverOnline();
         Geofire.initialize("onlineDrivers");
 
         Geofire.setLocation(
@@ -371,6 +321,61 @@ Future<void> getOnlineStatus() async {
     }
   }
 
+
+  void goOfflineNow() async {
+    try {
+      User? user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        // Stop sharing driver live location updates
+        Geofire.removeLocation(user.uid);
+    presenceManager.setDriverOffline();
+
+        // Stop listening to the newTripStatus
+        DatabaseReference? newTripRequestReference = FirebaseDatabase.instance
+            .reference()
+            .child("driversAccount")
+            .child(user.uid)
+            .child("newTripStatus");
+        newTripRequestReference.onDisconnect().remove();
+
+        // Remove the user from "onlineDrivers"
+        Geofire.removeLocation(user.uid);
+      }
+
+      await setOnlineStatus(false);
+
+      setState(() {
+        colorToShow = Colors.green;
+        titleToShow = "GO ONLINE NOW";
+        isDriverAvailable = false;
+      });
+
+       // Dispose of the PresenceManager
+      presenceManager.dispose();
+      print("User is now offline.");
+    } catch (e) {
+      print("Error going offline: $e");
+    }
+  }
+
+Future<void> getOnlineStatus() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  bool previouslyOnline = prefs.getBool('isDriverAvailable') ?? false; // Default to false if not set
+  setState(() {
+    isDriverAvailable = previouslyOnline;
+    colorToShow = isDriverAvailable ? Colors.pink : Colors.green;
+    titleToShow = isDriverAvailable ? "GO OFFLINE NOW" : "GO ONLINE NOW";
+  });
+}
+
+
+  Future<void> setOnlineStatus(bool status) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isDriverAvailable', status);
+  }
+
+
+ 
   initializePushNotificationSystem() {
     PushNotificationSystem notificationSystem = PushNotificationSystem();
     notificationSystem.generateDeviceRegistrationToken();

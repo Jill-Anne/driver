@@ -12,39 +12,38 @@ class PresenceManager {
   PresenceManager(this.userId) {
     _checkInitialConnection();
 
-    // Listen for connectivity changes
+ // Listen for connectivity changes
     Connectivity().onConnectivityChanged.listen((ConnectivityResult result) {
-      if (result != ConnectivityResult.none) {
-        _checkPingAndSetOnline();
-      } else {
-        _setDriverOffline();
+      if (result == ConnectivityResult.none) {
+        setDriverOffline();
       }
+      // No action needed for ConnectivityResult.mobile or ConnectivityResult.wifi
     });
   }
 
   void _checkInitialConnection() async {
     var connectivityResult = await Connectivity().checkConnectivity();
-    if (connectivityResult != ConnectivityResult.none) {
-      _checkPingAndSetOnline();
-    } else {
-      _setDriverOffline();
+    if (connectivityResult == ConnectivityResult.none) {
+      setDriverOffline();
     }
+    // Do nothing if there's a connection
   }
+
 
   Future<void> _checkPingAndSetOnline() async {
     if (await _pingServer('8.8.8.8')) {
-      _setDriverOnline();
+      setDriverOnline();
     } else {
-      _setDriverOffline();
+      setDriverOffline();
     }
 
     // Start a periodic ping to check connectivity
     _pingTimer?.cancel();
     _pingTimer = Timer.periodic(Duration(seconds: 10), (timer) async {
       if (await _pingServer('8.8.8.8')) {
-        _setDriverOnline();
+        setDriverOnline();
       } else {
-        _setDriverOffline();
+        setDriverOffline();
       }
     });
   }
@@ -57,16 +56,23 @@ class PresenceManager {
       return false;
     }
   }
-
-  void _setDriverOnline() {
+  void setDriverOnline() {
+    // Set the driver online only when explicitly called
     _onlineDriversRef.child(userId).set(true).then((_) {
       _onlineDriversRef.child(userId).onDisconnect().remove();
+    }).catchError((e) {
+      print("Error setting driver online: $e");
     });
   }
 
-  void _setDriverOffline() {
-    // Handle the offline logic here if needed
+  void setDriverOffline() {
+    _onlineDriversRef.child(userId).remove().then((_) {
+      print("Driver is set offline.");
+    }).catchError((e) {
+      print("Error setting driver offline: $e");
+    });
   }
+
 
   void dispose() {
     _pingTimer?.cancel();
