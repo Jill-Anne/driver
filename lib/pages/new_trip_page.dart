@@ -274,7 +274,7 @@ endTripNow() async {
   var driverCurrentLocationLatLng = LatLng(driverCurrentPosition!.latitude, driverCurrentPosition!.longitude);
   print('Driver Current Location: ${driverCurrentLocationLatLng.latitude}, ${driverCurrentLocationLatLng.longitude}');
 
-  // Show loading dialog (optional, you can skip this)
+  // Show loading dialog (optional)
   showDialog(
     barrierDismissible: false,
     context: context,
@@ -318,12 +318,22 @@ endTripNow() async {
         .child("status")
         .set("ended");
 
+    // Update driver's newTripStatus to "ended"
+    String driverUID = FirebaseAuth.instance.currentUser!.uid;
+    await FirebaseDatabase.instance.ref()
+        .child("driversAccount")
+        .child(driverUID)
+        .child("newTripStatus")
+        .set("ended");
+    print('Driver newTripStatus updated to "ended"');
+
     // Cancel any position streams if necessary
     positionStreamNewTripPage!.cancel();
   } else {
     print('Failed to retrieve direction details.');
   }
 }
+
 
 displayPaymentDialog(String fareAmount) {
   // Check if the current context is still valid

@@ -1,18 +1,16 @@
+/*
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'dart:async';
-import 'dart:io';
 
 class PresenceManager {
   final String userId;
   final DatabaseReference _onlineDriversRef = FirebaseDatabase.instance.ref('onlineDrivers');
-  Timer? _pingTimer;
 
   PresenceManager(this.userId) {
     _checkInitialConnection();
 
- // Listen for connectivity changes
+    // Listen for connectivity changes
     Connectivity().onConnectivityChanged.listen((ConnectivityResult result) {
       if (result == ConnectivityResult.none) {
         setDriverOffline();
@@ -29,37 +27,11 @@ class PresenceManager {
     // Do nothing if there's a connection
   }
 
-
-  Future<void> _checkPingAndSetOnline() async {
-    if (await _pingServer('8.8.8.8')) {
-      setDriverOnline();
-    } else {
-      setDriverOffline();
-    }
-
-    // Start a periodic ping to check connectivity
-    _pingTimer?.cancel();
-    _pingTimer = Timer.periodic(Duration(seconds: 10), (timer) async {
-      if (await _pingServer('8.8.8.8')) {
-        setDriverOnline();
-      } else {
-        setDriverOffline();
-      }
-    });
-  }
-
-  Future<bool> _pingServer(String host) async {
-    try {
-      final result = await InternetAddress.lookup(host);
-      return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
-    } catch (e) {
-      return false;
-    }
-  }
   void setDriverOnline() {
     // Set the driver online only when explicitly called
     _onlineDriversRef.child(userId).set(true).then((_) {
       _onlineDriversRef.child(userId).onDisconnect().remove();
+      print("Driver is set online.");
     }).catchError((e) {
       print("Error setting driver online: $e");
     });
@@ -73,8 +45,9 @@ class PresenceManager {
     });
   }
 
-
   void dispose() {
-    _pingTimer?.cancel();
+    // No timers to cancel anymore
   }
 }
+
+*/

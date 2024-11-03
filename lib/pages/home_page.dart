@@ -40,17 +40,14 @@ class _HomePageState extends State<HomePage> {
   final DatabaseReference _database = FirebaseDatabase.instance.reference();
   final FirebaseAuth _auth = FirebaseAuth.instance;
   Map<String, dynamic> userData = {};
- late PresenceManager presenceManager; // Declare presence manager
-
-  @override
   void initState() {
     super.initState();
-
+ listenToTripStatus();
     // Listen to authentication state changes
     FirebaseAuth.instance.authStateChanges().listen((User? user) {
       if (user != null) {
         print('User is authenticated: ${user.uid}');
-         presenceManager = PresenceManager(user.uid);
+        
       } else {
         print('User is not authenticated.');
       }
@@ -78,7 +75,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void dispose() {
     positionStreamHomePage?.cancel();
-     presenceManager.dispose(); // Stop the PresenceManager timer
+   //  presenceManager.dispose(); // Stop the PresenceManager timer
     super.dispose();
   }
 
@@ -253,6 +250,10 @@ children: [
         .animateCamera(CameraUpdate.newCameraPosition(cameraPosition));
   }
 
+// Add these variables to your class
+DateTime? lastUpdateTime;
+Position? lastKnownPosition;
+
 void setAndGetLocationUpdates() {
   positionStreamHomePage = Geolocator.getPositionStream().listen((Position position) async {
     currentPositionOfDriver = position;
@@ -260,88 +261,124 @@ void setAndGetLocationUpdates() {
     User? user = FirebaseAuth.instance.currentUser;
     if (user != null && isDriverAvailable) {
       try {
-        // Debounce logic to prevent excessive writes
-        await Geofire.setLocation(user.uid, currentPositionOfDriver!.latitude, currentPositionOfDriver!.longitude);
+        final DateTime now = DateTime.now();
+        
+        // Debounce logic
+        if (lastUpdateTime == null || now.difference(lastUpdateTime!).inSeconds >= 5) {
+          // Check for significant movement
+          if (lastKnownPosition == null || _hasSignificantMovement(lastKnownPosition!, position)) {
+            lastUpdateTime = now; // Update last write time
+            lastKnownPosition = position; // Update last known position
+            await Geofire.setLocation(user.uid, currentPositionOfDriver!.latitude, currentPositionOfDriver!.longitude);
+          }
+        }
       } catch (e) {
         print("Error updating location: $e");
       }
     }
+
+    // Update Google Map camera
+    LatLng positionLatLng = LatLng(position.latitude, position.longitude);
+    controllerGoogleMap!.animateCamera(CameraUpdate.newLatLng(positionLatLng));
   }, onError: (e) {
     print("Error getting location: $e");
   });
 }
 
+// Method to determine if the movement is significant
+bool _hasSignificantMovement(Position lastPosition, Position newPosition) {
+  const double threshold = 10.0; // meters
+  final double distanceInMeters = Geolocator.distanceBetween(
+    lastPosition.latitude, lastPosition.longitude,
+    newPosition.latitude, newPosition.longitude,
+  );
+  return distanceInMeters >= threshold;
+}
 
-   void goOnlineNow() async {
-    try {
-      User? user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        Position positionOfUser = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.bestForNavigation,
-        );
- presenceManager.setDriverOnline();
-        Geofire.initialize("onlineDrivers");
 
-        Geofire.setLocation(
-          user.uid,
-          positionOfUser.latitude,
-          positionOfUser.longitude,
-        );
+void listenToTripStatus() {
+  User? user = FirebaseAuth.instance.currentUser;
+  if (user != null) {
+    DatabaseReference newTripRequestReference = FirebaseDatabase.instance
+        .reference()
+        .child("driversAccount")
+        .child(user.uid)
+        .child("newTripStatus");
 
-        DatabaseReference userRef = FirebaseDatabase.instance
-            .reference()
-            .child("driversAccount")
-            .child(user.uid);
-        userRef.child("newTripStatus").set("waiting");
-
-        DatabaseReference newTripRequestReference =
-            userRef.child("newTripStatus");
-        newTripRequestReference.onValue.listen((event) {});
-
-        await setOnlineStatus(true);
-
-        setState(() {
-          colorToShow = Colors.pink;
-          titleToShow = "GO OFFLINE NOW";
-          isDriverAvailable = true;
-        });
-
-        print("User is now online.");
-        // Initialize PresenceManager here as well to ensure online status is set
-        presenceManager = PresenceManager(user.uid);
-      } else {
-        print('User is not authenticated.');
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const LoginScreen()),
-        );
+    newTripRequestReference.onValue.listen((event) {
+      final snapshot = event.snapshot;
+      if (snapshot.exists) {
+        String newStatus = snapshot.value.toString();
+        if (newStatus == "ended") {
+          goOnlineNow(); // Make the driver online
+        } else if (newStatus == "accepted") {
+          goOfflineNow(); // Make the driver offline
+        }
       }
-    } catch (e) {
-      print("Error going online: $e");
-    }
+    });
   }
+}
+
+void goOnlineNow() async {
+  try {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      // Retrieve the current position of the user
+      Position positionOfUser = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.bestForNavigation,
+      );
+
+      // Initialize Geofire and set the driver's location
+      Geofire.initialize("onlineDrivers");
+      Geofire.setLocation(
+        user.uid,
+        positionOfUser.latitude,
+        positionOfUser.longitude,
+      );
+
+      // Update driver's new trip status to "waiting"
+      DatabaseReference userRef = FirebaseDatabase.instance
+          .reference()
+          .child("driversAccount")
+          .child(user.uid);
+      await userRef.child("newTripStatus").set("waiting");
+
+      setState(() {
+        colorToShow = Colors.pink;
+        titleToShow = "GO OFFLINE NOW";
+        isDriverAvailable = true;
+      });
+
+      print("User is now online.");
+    } else {
+      print('User is not authenticated.');
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
+      );
+    }
+  } catch (e) {
+    print("Error going online: $e");
+  }
+}
 
 
-  void goOfflineNow() async {
-    try {
-      User? user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        // Stop sharing driver live location updates
-        Geofire.removeLocation(user.uid);
-    presenceManager.setDriverOffline();
+void goOfflineNow() async {
+  try {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      // Stop sharing driver live location updates
+      Geofire.removeLocation(user.uid);
 
-        // Stop listening to the newTripStatus
-        DatabaseReference? newTripRequestReference = FirebaseDatabase.instance
-            .reference()
-            .child("driversAccount")
-            .child(user.uid)
-            .child("newTripStatus");
-        newTripRequestReference.onDisconnect().remove();
+      // Stop listening to newTripStatus
+      DatabaseReference newTripRequestReference = FirebaseDatabase.instance
+          .reference()
+          .child("driversAccount")
+          .child(user.uid)
+          .child("newTripStatus");
+      newTripRequestReference.onDisconnect().remove();
 
-        // Remove the user from "onlineDrivers"
-        Geofire.removeLocation(user.uid);
-      }
-
+      // Update online status
       await setOnlineStatus(false);
 
       setState(() {
@@ -350,13 +387,13 @@ void setAndGetLocationUpdates() {
         isDriverAvailable = false;
       });
 
-       // Dispose of the PresenceManager
-      presenceManager.dispose();
       print("User is now offline.");
-    } catch (e) {
-      print("Error going offline: $e");
     }
+  } catch (e) {
+    print("Error going offline: $e");
   }
+}
+
 
 Future<void> getOnlineStatus() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();

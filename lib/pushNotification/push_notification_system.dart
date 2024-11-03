@@ -120,10 +120,13 @@ Future<void> generateDeviceRegistrationToken() async {
           tripTime: tripMap["tripTime"] ?? "Not set"
         );
 
-        showDialog(
-          context: context,
-          builder: (BuildContext context) => NotificationDialog(tripDetailsInfo: tripDetailsInfo),
-        );
+        // showDialog(
+        //   context: context,
+        //   builder: (BuildContext context) => NotificationDialog(tripDetailsInfo: tripDetailsInfo),
+        // );
+      await NotificationDialog.show(context, tripDetailsInfo);
+
+
       } else {
         print("No data available for tripID $tripID");
       }
@@ -132,4 +135,5 @@ Future<void> generateDeviceRegistrationToken() async {
       print('Error retrieving trip request info: $e');
     }
   }
+
 }
