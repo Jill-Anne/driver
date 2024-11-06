@@ -192,10 +192,12 @@ children: [
       });
     }
   },
+  
   style: ElevatedButton.styleFrom(
     backgroundColor: (titleToShow == "GO ONLINE NOW") 
         ? Colors.green 
         : Colors.pink,
+        
   ),
   child: Text(
     "CONFIRM",
@@ -206,6 +208,7 @@ children: [
       fontWeight: FontWeight.bold, // Bold text
     ),
   ),
+  
 ),
 
                                 ),
@@ -221,7 +224,11 @@ children: [
               style: ElevatedButton.styleFrom(
                 backgroundColor: colorToShow,
               ),
-              child: Text(titleToShow),
+              child: Text(titleToShow,
+              style: TextStyle(
+      color: Colors.white,  // Force the title text color to white
+      fontWeight: FontWeight.bold,  // Bold text
+    ),),
             ),
           ),
           // Positioned(
