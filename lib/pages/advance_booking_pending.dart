@@ -111,60 +111,60 @@ class _AdvanceBookingState extends State<AdvanceBooking> {
     );
   }
 
-  Widget _buildTripCard(DocumentSnapshot trip) {
-    DateTime startDate = trip['date'].toDate();
-    DateTime endDate = trip['dateto'].toDate();
-    int daysDifference = endDate.difference(startDate).inDays + 1;
-    String serviceDuration = "$daysDifference Day Service";
+ Widget _buildTripCard(DocumentSnapshot trip) {
+  DateTime startDate = trip['date'].toDate();
+  DateTime endDate = trip['dateto'].toDate();
+  int daysDifference = endDate.difference(startDate).inDays + 1;
+  String serviceDuration = "$daysDifference Day Service";
 
-    return GestureDetector(
-      onTap: () async {
-        final overlappingTrips = await _checkForOverlappingTrips(startDate, endDate, trip['time']);
-        if (overlappingTrips.isNotEmpty) {
-          print('Overlapping trips found: ${overlappingTrips.length}');
-          _showOverlappingDialog(context, overlappingTrips);
-        } else {
-          print('No overlapping trips, showing acceptance dialog.');
-          _showAcceptanceDialog(context, trip);
-        }
-      },
-      child: Card(
-        color: Colors.grey[200],
-        elevation: 10,
-        margin: const EdgeInsets.all(10),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Icon(Icons.account_circle, size: 35),
-                  const SizedBox(width: 10),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(trip['name'], style: const TextStyle(color: Colors.black, fontSize: 16)),
-                      Text(trip['mynum'], style: const TextStyle(color: Colors.black, fontSize: 12)),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              Text(serviceDuration, style: const TextStyle(color: Colors.black, fontSize: 14)),
-              const SizedBox(height: 10),
-              Text(
-                '${DateFormat.yMMMd().format(startDate)} - ${DateFormat.yMMMd().format(endDate)}\n${trip['time']}',
-                style: const TextStyle(color: Colors.black, fontSize: 12),
-              ),
-              const Divider(),
-              Text(trip['to'], style: const TextStyle(color: Colors.black, fontSize: 12)),
-            ],
-          ),
+  return GestureDetector(
+    onTap: () async {
+      final overlappingTrips = await _checkForOverlappingTrips(startDate, endDate, trip['time']);
+      if (overlappingTrips.isNotEmpty) {
+        print('Overlapping trips found: ${overlappingTrips.length}');
+        _showOverlappingDialog(context, overlappingTrips);
+      } else {
+        print('No overlapping trips, showing acceptance dialog.');
+        _showAcceptanceDialog(context, trip);
+      }
+    },
+    child: Card(
+      color: Colors.grey[200],
+      elevation: 10,
+      margin: const EdgeInsets.all(10),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.account_circle, size: 35),
+                const SizedBox(width: 10),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(trip['name'], style: const TextStyle(color: Colors.black, fontSize: 16)),
+                    Text(trip['mynum'], style: const TextStyle(color: Colors.black, fontSize: 12)),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Text(serviceDuration, style: const TextStyle(color: Colors.black, fontSize: 14)),
+            const SizedBox(height: 10),
+            Text(
+              '${DateFormat.yMMMd().format(startDate)} - ${DateFormat.yMMMd().format(endDate)}\n${trip['time']}',
+              style: const TextStyle(color: Colors.black, fontSize: 12),
+            ),
+            const Divider(),
+            Text(trip['to'], style: const TextStyle(color: Colors.black, fontSize: 12)),
+          ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
 Future<List<DocumentSnapshot>> _checkForOverlappingTrips(DateTime startDate, DateTime endDate, String tripTime) async {
   // Get current driver's data
@@ -176,12 +176,11 @@ Future<List<DocumentSnapshot>> _checkForOverlappingTrips(DateTime startDate, Dat
   print("Querying with First Name: $firstName, Last Name: $lastName");
 
   // Query for advance bookings for the current driver
-final snapshot = await FirebaseFirestore.instance
-    .collection('Advance Bookings')
-    .where('drivername', isEqualTo: firstName)
-    .where('driverlastName', isEqualTo: lastName)
-    .get(const GetOptions(source: Source.serverAndCache)); // Optionally use caching
-
+  final snapshot = await FirebaseFirestore.instance
+      .collection('Advance Bookings')
+      .where('drivername', isEqualTo: firstName)
+      .where('driverlastName', isEqualTo: lastName)
+      .get(const GetOptions(source: Source.serverAndCache));
 
   print("User's Advance Bookings: ${snapshot.docs.length} found");
 
@@ -199,8 +198,11 @@ final snapshot = await FirebaseFirestore.instance
   tripTime = cleanTripTime(tripTime);
   DateTime chosenTime = parseTime(tripTime);
 
-  DateTime bufferStart = chosenTime.subtract(const Duration(hours: 1));
-  DateTime bufferEnd = chosenTime.add(const Duration(hours: 1));
+  // Buffer times for the new trip (2 hours before and after)
+  DateTime bufferStart = chosenTime.subtract(const Duration(hours: 2));
+  DateTime bufferEnd = chosenTime.add(const Duration(hours: 2));
+
+  print("Checking new trip time buffer: $bufferStart to $bufferEnd");
 
   // Filter for overlapping trips
   return snapshot.docs.where((doc) {
@@ -209,99 +211,105 @@ final snapshot = await FirebaseFirestore.instance
     String existingTripTime = cleanTripTime(doc['time']);
     DateTime existingTime = parseTime(existingTripTime);
 
-    bool sameDay = tripStartDate.isAtSameMomentAs(tripEndDate) ||
-                   (tripStartDate.isBefore(tripEndDate) && tripEndDate.isAfter(tripStartDate));
+    // Check if the new trip's time falls within the buffer window of any existing trip
+    bool isDateOverlap = (startDate.isBefore(tripEndDate) && endDate.isAfter(tripStartDate));
 
-    print("Checking booking ID: ${doc.id}, Existing Time: $existingTime, Buffer Start: $bufferStart, Buffer End: $bufferEnd");
+    // Debug for date and time overlap
+    print("Checking booking ID: ${doc.id}, Trip Time: $existingTime, Buffer Start: $bufferStart, Buffer End: $bufferEnd");
 
-    return sameDay && (existingTime.isAfter(bufferStart) && existingTime.isBefore(bufferEnd) ||
-                        existingTime.isAtSameMomentAs(chosenTime));
+    return isDateOverlap && (existingTime.isAfter(bufferStart) && existingTime.isBefore(bufferEnd) ||
+                             existingTime.isAtSameMomentAs(chosenTime));
   }).toList();
 }
 
+String cleanTripTime(String tripTime) {
+  return tripTime
+      .replaceAll(RegExp(r'[\u00A0]'), ' ')
+      .replaceAll(RegExp(r'[\u200B-\u200D\uFEFF]'), ' ')
+      .replaceAll(RegExp(r'[^\x20-\x7E]'), ' ')
+      .replaceAll(RegExp(r'\s+'), ' ')
+      .trim();
+}
 
-  String cleanTripTime(String tripTime) {
-    return tripTime
-        .replaceAll(RegExp(r'[\u00A0]'), '')
-        .replaceAll(RegExp(r'[\u200B-\u200D\uFEFF]'), '')
-        .replaceAll(RegExp(r'[^\x20-\x7E]'), '')
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .trim();
-  }
-
-  DateTime parseTime(String time) {
-    try {
-      return DateFormat.jm().parse(time);
-    } catch (e) {
-      final parts = time.split(' ');
-      if (parts.length == 2) {
-        final timeParts = parts[0].split(':');
-        final hour = int.parse(timeParts[0]) % 12 + (parts[1] == 'PM' ? 12 : 0);
-        final minute = int.parse(timeParts[1]);
-        return DateTime(0, 1, 1, hour, minute);
-      }
-      throw FormatException("Invalid time format: '$time'");
+DateTime parseTime(String time) {
+  try {
+    return DateFormat.jm().parse(time);
+  } catch (e) {
+    final parts = time.split(' ');
+    if (parts.length == 2) {
+      final timeParts = parts[0].split(':');
+      final hour = int.parse(timeParts[0]) % 12 + (parts[1] == 'PM' ? 12 : 0);
+      final minute = int.parse(timeParts[1]);
+      return DateTime(0, 1, 1, hour, minute);
     }
+    throw FormatException("Invalid time format: '$time'");
   }
+}
 
-  void _showOverlappingDialog(BuildContext context, List<DocumentSnapshot> overlappingTrips) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return Dialog(
-          backgroundColor: const Color(0xFF2E3192),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                const Text(
-                  'Warning: There are overlapping trips!',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.red,
-                    fontSize: 18,
-                  ),
-                  textAlign: TextAlign.center,
+void _showOverlappingDialog(BuildContext context, List<DocumentSnapshot> overlappingTrips) {
+  showDialog(
+    context: context,
+    builder: (context) {
+      return Dialog(
+        backgroundColor: const Color(0xFF2E3192),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const Text(
+                'Warning: There are overlapping trips!',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.red,
+                  fontSize: 18,
                 ),
-                const SizedBox(height: 15),
-                const Text(
-                  'The following trips overlap:',
-                  style: TextStyle(color: Colors.white),
-                ),
-                const SizedBox(height: 10),
-                ...overlappingTrips.map((doc) => Text(
-                  'Trip to ${doc['to']} on ${DateFormat.yMMMd().format(doc['date'].toDate())} at ${doc['time']}',
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 15),
+              const Text(
+                'The following trips overlap:',
+                style: TextStyle(color: Colors.white),
+              ),
+            const SizedBox(height: 10),
+              // Display each overlapping trip with both start and end dates
+              ...overlappingTrips.map((doc) {
+                DateTime startDate = doc['date'].toDate();
+                DateTime endDate = doc['dateto'].toDate();
+                return Text(
+                  'Trip to ${doc['to']} from ${DateFormat.yMMMd().format(startDate)} to ${DateFormat.yMMMd().format(endDate)} at ${doc['time']}',
                   style: const TextStyle(color: Colors.white),
-                )),
-                const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.grey,
-                    shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(3), // Rounded borders
-      ),
+                );
+              }),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.grey,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(3), // Rounded borders
                   ),
-                  child: const Text(
-                          'Close',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                        ),
                 ),
-              ],
-            ),
+                child: const Text(
+                  'Close',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ],
           ),
-        );
-      },
-    );
-  }
+        ),
+      );
+    },
+  );
+}
+
 
   void _showAcceptanceDialog(BuildContext context, DocumentSnapshot trip) {
     showDialog(
