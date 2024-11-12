@@ -33,7 +33,7 @@
     </queries>
 
     <application
-        android:label="driver"
+        android:label="Trico Driver"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon"
         android:enableOnBackInvokedCallback="true">
