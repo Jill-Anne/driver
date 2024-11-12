@@ -1,12 +1,17 @@
 import 'dart:async';
 
 import 'package:assets_audio_player/assets_audio_player.dart';
+import 'package:driver/env/env.dart';
+import 'package:driver/global/global_var.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 String userName = "";
 //String userPhone = "";
-String googleMapKey = "AIzaSyCkLt8ILMXSFRP12xS8P7830kGNBeGn47s";
+//String googleMapKey = "AIzaSyCsCaE3mYv_2jSbh0pZZswbGxL0rESl0HY";
+
+String googleMapKey = EnvMap.googleMapKey;
+
 
 const CameraPosition googlePlexInitialPosition = CameraPosition(
   target: LatLng(14.726650, 120.943440),

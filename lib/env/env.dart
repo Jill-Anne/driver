@@ -28,4 +28,7 @@ final class Env {
 
   @EnviedField(varName: 'measurementId')
   static const String measurementId = _Env.measurementId;
+
+  @EnviedField(varName: 'googleMapKey')
+  static const String googleMapKey = EnvMap.googleMapKey;
 }
