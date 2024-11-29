@@ -117,6 +117,9 @@ class _AdvanceBookingState extends State<AdvanceBooking> {
   int daysDifference = endDate.difference(startDate).inDays + 1;
   String serviceDuration = "$daysDifference Day Service";
 
+  // Check and delete the trip if the dateto is already passed
+  deleteExpiredTripAndRemoveCard(context, trip);
+
   return GestureDetector(
     onTap: () async {
       final overlappingTrips = await _checkForOverlappingTrips(startDate, endDate, trip['time']);
@@ -418,3 +421,29 @@ void _showOverlappingDialog(BuildContext context, List<DocumentSnapshot> overlap
     });
   }
 }
+
+
+Future<void> deleteExpiredTripAndRemoveCard(BuildContext context, DocumentSnapshot trip) async {
+  DateTime startDate = trip['date'].toDate(); // Get the start date (e.g., 29th)
+  DateTime tomorrow = startDate.add(Duration(days: 1)); // Calculate tomorrow (30th)
+
+  // Check if tomorrow's date has passed (meaning today is 30th or later)
+  if (tomorrow.isBefore(DateTime.now())) {
+    // Delete the trip from Firestore
+    try {
+      await FirebaseFirestore.instance
+          .collection('Advance Bookings')
+          .doc(trip.id)
+          .delete();
+
+      // Print the trip ID that was deleted
+      print("Deleted trip with ID: ${trip.id}");
+
+      // Remove the card by using SizedBox.shrink(), effectively hiding it in the UI
+      return; // This removes the trip from the UI
+    } catch (e) {
+      print("Error deleting trip with ID ${trip.id}: $e");
+    }
+  }
+}
+
